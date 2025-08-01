@@ -6,28 +6,34 @@ const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
-  const username = ref<string | null>(localStorage.getItem('username'))
+  const currentUsername = ref<string | null>(localStorage.getItem('username'))
   
   const isAuthenticated = computed(() => token.value !== null)
   
-  const login = async (username: string, password: string) => {
+  const login = async (inputUsername: string, password: string) => {
     try {
+      console.log('🔐 Attempting login with:', { username: inputUsername, API_BASE_URL })
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        username,
+        username: inputUsername,
         password
       })
       
-      const { access_token, username: user } = response.data
+      console.log('✅ Login response:', response.data)
+      
+      const { access_token, username: responseUsername } = response.data
       token.value = access_token
-      username.value = user
+      currentUsername.value = responseUsername
       
       localStorage.setItem('token', access_token)
-      localStorage.setItem('username', user)
+      localStorage.setItem('username', responseUsername)
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
       
+      console.log('✅ Login successful, token stored')
       return { success: true }
     } catch (error: any) {
+      console.error('❌ Login error:', error)
+      console.error('❌ Error response:', error.response?.data)
       return { success: false, error: error.response?.data?.detail || 'Login failed' }
     }
   }
@@ -43,7 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
   
   const logout = () => {
     token.value = null
-    username.value = null
+    currentUsername.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('username')
     delete axios.defaults.headers.common['Authorization']
@@ -56,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
   
   return {
     token,
-    username,
+    username: currentUsername,
     isAuthenticated,
     login,
     register,
