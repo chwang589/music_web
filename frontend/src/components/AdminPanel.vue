@@ -26,6 +26,21 @@
         
         <!-- Create News Tab -->
         <div v-if="activeTab === 'create'" class="tab-content">
+          <div class="quick-templates">
+            <h4>🚀 快速开始</h4>
+            <div class="template-buttons">
+              <button 
+                v-for="(template, index) in quickTemplates"
+                :key="index"
+                @click="useTemplate(template)"
+                type="button"
+                class="template-btn"
+              >
+                {{ template.title }}
+              </button>
+            </div>
+          </div>
+          
           <form @submit.prevent="handleCreateNews" class="news-form">
             <div class="form-group">
               <label for="news-title">Title</label>
@@ -52,7 +67,7 @@
             </div>
             
             <div class="form-group">
-              <label for="news-image">Image URL (optional)</label>
+              <label for="news-image">Image URL</label>
               <input
                 id="news-image"
                 v-model="newNews.image_url"
@@ -61,6 +76,21 @@
                 class="form-input"
                 placeholder="https://example.com/image.jpg"
               />
+              <div class="image-suggestions">
+                <p class="suggestion-title">🖼️ 推荐图片 (点击使用):</p>
+                <div class="suggestion-grid">
+                  <div 
+                    v-for="(img, index) in suggestedImages" 
+                    :key="index"
+                    @click="newNews.image_url = img.url"
+                    class="suggestion-item"
+                    :title="img.description"
+                  >
+                    <img :src="img.url" :alt="img.description" />
+                    <span>{{ img.description }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div v-if="createError" class="error-message">
@@ -195,6 +225,54 @@ const newNews = reactive({
   description: '',
   image_url: ''
 })
+
+// 推荐图片
+const suggestedImages = [
+  {
+    url: 'https://images.unsplash.com/photo-1459749187778-3663c29ab4b3?w=500',
+    description: '音乐节'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500',
+    description: '摇滚演出'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=500',
+    description: '钢琴表演'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1483032469466-b937c425697b?w=500',
+    description: '说唱文化'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=500',
+    description: '古典音乐'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+    description: '独立音乐'
+  }
+]
+
+// 快速创建模板
+const quickTemplates = [
+  {
+    title: '🎵 音乐活动新消息',
+    description: '最新的音乐活动即将开始，敬请期待...',
+    image_url: 'https://images.unsplash.com/photo-1459749187778-3663c29ab4b3?w=500'
+  },
+  {
+    title: '🎸 艺人动态更新',
+    description: '知名艺人最新动态，为粉丝带来精彩内容...',
+    image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500'
+  }
+]
+
+const useTemplate = (template: any) => {
+  newNews.title = template.title
+  newNews.description = template.description
+  newNews.image_url = template.image_url
+}
 
 const handleCreateNews = async () => {
   if (!authStore.isAuthenticated) {
@@ -622,6 +700,94 @@ watch(() => props.isOpen, (newValue) => {
   background: #5a6268;
 }
 
+.quick-templates {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.quick-templates h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.template-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.template-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.template-btn:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
+.image-suggestions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.suggestion-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.suggestion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.suggestion-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.suggestion-item:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.suggestion-item img {
+  width: 60px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+
+.suggestion-item span {
+  font-size: 0.75rem;
+  text-align: center;
+  color: #6c757d;
+}
+
 @media (max-width: 768px) {
   .admin-panel {
     width: 95%;
@@ -636,6 +802,14 @@ watch(() => props.isOpen, (newValue) => {
   .news-item-actions {
     margin-left: 0;
     justify-content: flex-end;
+  }
+  
+  .template-buttons {
+    flex-direction: column;
+  }
+  
+  .suggestion-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>
