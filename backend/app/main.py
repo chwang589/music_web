@@ -13,16 +13,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",  # Vite default port
-        "http://127.0.0.1:5173",
-        "*"  # Allow all origins for development - change this in production
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # 允许所有来源访问
+    allow_credentials=False,  # 设为False以允许通配符origins
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],  # 暴露所有响应头
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
@@ -34,4 +29,14 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    import socket
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    
+    return {
+        "status": "healthy",
+        "hostname": hostname,
+        "local_ip": local_ip,
+        "cors_enabled": True,
+        "api_base": "/api"
+    }

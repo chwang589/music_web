@@ -9,8 +9,23 @@ if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
     exit 1
 fi
 
-# Get local IP address
-LOCAL_IP=$(hostname -I | awk '{print $1}')
+# Get local IP address (try multiple methods for reliability)
+LOCAL_IP=$(hostname -I | awk '{print $1}' 2>/dev/null)
+
+# Fallback IP detection methods
+if [ -z "$LOCAL_IP" ] || [ "$LOCAL_IP" = "127.0.0.1" ]; then
+    LOCAL_IP=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $7; exit}' 2>/dev/null)
+fi
+
+if [ -z "$LOCAL_IP" ] || [ "$LOCAL_IP" = "127.0.0.1" ]; then
+    LOCAL_IP=$(ifconfig 2>/dev/null | grep -E "inet.*broadcast" | awk '{print $2}' | head -1)
+fi
+
+if [ -z "$LOCAL_IP" ] || [ "$LOCAL_IP" = "127.0.0.1" ]; then
+    echo "⚠️  Warning: Could not detect local IP, using localhost"
+    LOCAL_IP="localhost"
+fi
+
 echo "📡 Local IP detected: $LOCAL_IP"
 
 # Kill existing processes
@@ -21,6 +36,8 @@ sleep 2
 
 # Configure frontend for network access
 echo "VITE_API_BASE_URL=http://$LOCAL_IP:8000" > frontend/.env
+echo "VITE_HOST=0.0.0.0" >> frontend/.env
+echo "VITE_PORT=3000" >> frontend/.env
 echo "✅ Frontend configured for network access"
 
 # Start backend with network binding

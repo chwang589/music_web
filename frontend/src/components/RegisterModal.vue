@@ -16,6 +16,11 @@
             required
             :disabled="loading"
             class="form-input"
+            autocomplete="username"
+            minlength="3"
+            maxlength="50"
+            pattern="[a-zA-Z0-9_]{3,50}"
+            title="Username must be 3-50 characters, letters, numbers and underscore only"
           />
         </div>
         
@@ -28,6 +33,10 @@
             required
             :disabled="loading"
             class="form-input"
+            autocomplete="email"
+            maxlength="100"
+            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}"
+            title="Please enter a valid email address"
           />
         </div>
         
@@ -40,6 +49,10 @@
             required
             :disabled="loading"
             class="form-input"
+            autocomplete="new-password"
+            minlength="6"
+            maxlength="100"
+            title="Password must be at least 6 characters long"
           />
         </div>
         
@@ -52,6 +65,10 @@
             required
             :disabled="loading"
             class="form-input"
+            autocomplete="new-password"
+            minlength="6"
+            maxlength="100"
+            title="Please confirm your password"
           />
         </div>
         
@@ -64,7 +81,8 @@
         </div>
         
         <button type="submit" :disabled="loading" class="submit-btn">
-          {{ loading ? 'Creating account...' : 'Register' }}
+          <span v-if="loading" class="loading-spinner"></span>
+          {{ loading ? 'Creating account... (This may take 10-15 seconds)' : 'Register' }}
         </button>
       </form>
       
@@ -101,14 +119,50 @@ const formData = reactive({
   confirmPassword: ''
 })
 
-const handleRegister = async () => {
-  if (formData.password !== formData.confirmPassword) {
-    error.value = 'Passwords do not match'
-    return
+const validateForm = () => {
+  // Clear previous errors
+  error.value = ''
+  
+  // Username validation
+  if (!formData.username || formData.username.length < 3) {
+    error.value = 'Username must be at least 3 characters long'
+    return false
   }
   
-  if (formData.password.length < 6) {
+  if (!/^[a-zA-Z0-9_]{3,50}$/.test(formData.username)) {
+    error.value = 'Username can only contain letters, numbers, and underscores'
+    return false
+  }
+  
+  // Email validation
+  if (!formData.email) {
+    error.value = 'Email is required'
+    return false
+  }
+  
+  const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i
+  if (!emailRegex.test(formData.email)) {
+    error.value = 'Please enter a valid email address'
+    return false
+  }
+  
+  // Password validation
+  if (!formData.password || formData.password.length < 6) {
     error.value = 'Password must be at least 6 characters long'
+    return false
+  }
+  
+  // Confirm password validation
+  if (formData.password !== formData.confirmPassword) {
+    error.value = 'Passwords do not match'
+    return false
+  }
+  
+  return true
+}
+
+const handleRegister = async () => {
+  if (!validateForm()) {
     return
   }
   
@@ -116,22 +170,27 @@ const handleRegister = async () => {
   error.value = ''
   success.value = ''
   
-  const result = await authStore.register({
-    username: formData.username,
-    email: formData.email,
-    password: formData.password
-  })
-  
-  if (result.success) {
-    success.value = 'Account created successfully! You can now login.'
-    setTimeout(() => {
-      emit('switchToLogin')
-    }, 2000)
-  } else {
-    error.value = result.error || 'Registration failed'
+  try {
+    const result = await authStore.register({
+      username: formData.username.trim(),
+      email: formData.email.toLowerCase().trim(),
+      password: formData.password
+    })
+    
+    if (result.success) {
+      success.value = 'Account created successfully! You can now login.'
+      setTimeout(() => {
+        emit('switchToLogin')
+      }, 2000)
+    } else {
+      error.value = result.error || 'Registration failed'
+    }
+  } catch (err) {
+    console.error('Registration error:', err)
+    error.value = 'Network error. Please check your connection and try again.'
+  } finally {
+    loading.value = false
   }
-  
-  loading.value = false
 }
 
 watch(() => props.isOpen, (newValue) => {
@@ -242,9 +301,13 @@ watch(() => props.isOpen, (newValue) => {
   padding: 12px 15px;
   border: 2px solid #e9ecef;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 16px; /* 防止iOS缩放 */
   transition: all 0.3s ease;
   box-sizing: border-box;
+  -webkit-appearance: none; /* 移除iOS默认样式 */
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #fff;
 }
 
 .form-input:focus {
@@ -303,6 +366,21 @@ watch(() => props.isOpen, (newValue) => {
   transform: none;
 }
 
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .modal-footer {
   padding: 20px 25px;
   border-top: 1px solid #e9ecef;
@@ -325,5 +403,45 @@ watch(() => props.isOpen, (newValue) => {
 
 .link-btn:hover {
   color: #764ba2;
+}
+
+/* iOS Safari 特殊修复 */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .form-input {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
+  
+  .submit-btn {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
+}
+
+/* iOS 16+ 修复 */
+@supports (-webkit-touch-callout: none) {
+  .form-input {
+    font-size: 16px; /* 防止缩放 */
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  .modal-content {
+    -webkit-transform: translateZ(0); /* 硬件加速 */
+    transform: translateZ(0);
+  }
+}
+
+/* 移动端特殊处理 */
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .form-input {
+    font-size: 16px; /* 必须16px以上防止iOS缩放 */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
 }
 </style>
