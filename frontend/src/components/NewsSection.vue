@@ -148,10 +148,24 @@ onMounted(() => {
 
 .news-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
   transition: all 0.3s ease;
+}
+
+/* PC端3列布局 */
+@media (min-width: 1200px) {
+  .news-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 平板端2列布局 */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .news-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .news-card {
@@ -253,24 +267,50 @@ onMounted(() => {
   color: #dc3545;
 }
 
-@media (max-width: 768px) {
+/* 移动端1列布局 */
+@media (max-width: 767px) {
+  .news-section {
+    padding: 60px 0;
+  }
+
   .news-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
   
   .section-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
   }
   
   .news-card {
-    margin: 0 10px;
+    margin: 0 5px;
+    border-radius: 12px;
+  }
+
+  .news-image {
+    height: 180px;
+  }
+
+  .news-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-start;
   }
 }
 
 @media (max-width: 480px) {
   .container {
     padding: 0 15px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .section-title::after {
+    width: 60px;
+    height: 3px;
   }
   
   .news-content {
@@ -279,6 +319,52 @@ onMounted(() => {
   
   .news-title {
     font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .news-description {
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .news-image {
+    height: 160px;
+  }
+
+  .load-more-btn {
+    padding: 10px 25px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .news-card {
+    margin: 0;
+  }
+
+  .news-image {
+    height: 140px;
+  }
+
+  .news-content {
+    padding: 0.8rem;
+  }
+
+  .news-title {
+    font-size: 1rem;
+  }
+
+  .news-description {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .news-meta {
+    font-size: 0.8rem;
   }
 }
 </style>

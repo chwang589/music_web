@@ -348,23 +348,79 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+  .nav-container {
+    padding: 0 10px;
+    height: 55px;
+  }
+
   .nav-brand h2 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
   
   .nav-sections {
-    gap: 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .nav-button {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .progress-bar {
+    width: 30px;
+    height: 2px;
   }
   
   .auth-buttons {
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.3rem;
+  }
+
+  .auth-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
   }
   
   .user-menu {
-    flex-direction: column;
     gap: 0.3rem;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
+  }
+
+  .username {
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-container {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 50px;
+    padding: 5px;
+  }
+
+  .nav-brand {
+    order: 1;
+    flex: 1;
+  }
+
+  .nav-sections {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+    gap: 1rem;
+  }
+
+  .nav-auth {
+    order: 2;
+  }
+
+  .progress-bar {
+    display: none;
   }
 }
 </style>

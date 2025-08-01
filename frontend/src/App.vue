@@ -14,4 +14,12 @@ import { RouterView } from 'vue-router'
   width: 100vw;
   overflow: hidden;
 }
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  #app {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
 </style>
