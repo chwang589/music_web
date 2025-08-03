@@ -3,7 +3,7 @@
     <NavigationBar 
       @openLogin="showLoginModal = true"
       @openRegister="showRegisterModal = true"
-      @openAdmin="showAdminPanel = true"
+      @openUserCenter="showUserCenter = true"
     />
     
     <IntroductionSection @openLogin="showLoginModal = true" />
@@ -22,9 +22,9 @@
       @switchToLogin="switchToLogin"
     />
     
-    <AdminPanel 
-      :isOpen="showAdminPanel"
-      @close="showAdminPanel = false"
+    <UserCenter 
+      :isOpen="showUserCenter"
+      @close="showUserCenter = false"
     />
   </div>
 </template>
@@ -36,11 +36,11 @@ import IntroductionSection from '../components/IntroductionSection.vue'
 import NewsSection from '../components/NewsSection.vue'
 import LoginModal from '../components/LoginModal.vue'
 import RegisterModal from '../components/RegisterModal.vue'
-import AdminPanel from '../components/AdminPanel.vue'
+import UserCenter from '../components/UserCenter.vue'
 
 const showLoginModal = ref(false)
 const showRegisterModal = ref(false)
-const showAdminPanel = ref(false)
+const showUserCenter = ref(false)
 
 const switchToRegister = () => {
   showLoginModal.value = false

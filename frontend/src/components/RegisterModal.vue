@@ -26,18 +26,60 @@
         
         <div class="form-group">
           <label for="reg-email">Email</label>
-          <input
-            id="reg-email"
-            v-model="formData.email"
-            type="email"
-            required
-            :disabled="loading"
-            class="form-input"
-            autocomplete="email"
-            maxlength="100"
-            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}"
-            title="Please enter a valid email address"
-          />
+          <div class="email-input-group">
+            <input
+              id="reg-email"
+              v-model="formData.email"
+              type="email"
+              required
+              :disabled="loading || emailVerificationStep > 1"
+              class="form-input"
+              autocomplete="email"
+              maxlength="100"
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}"
+              title="Please enter a valid email address"
+            />
+            <button
+              v-if="emailVerificationStep === 1"
+              @click="sendVerificationCode"
+              :disabled="loadingVerification || !formData.email || !isValidEmail(formData.email)"
+              type="button"
+              class="send-code-btn"
+            >
+              {{ loadingVerification ? 'Sending...' : 'Send Code' }}
+            </button>
+            <span v-else-if="emailVerificationStep === 2" class="email-verified">
+              ✓ Code Sent
+            </span>
+          </div>
+        </div>
+        
+        <div v-if="emailVerificationStep === 2" class="form-group">
+          <label for="verification-code">Verification Code</label>
+          <div class="verification-input-group">
+            <input
+              id="verification-code"
+              v-model="formData.verificationCode"
+              type="text"
+              required
+              :disabled="loading"
+              class="form-input verification-input"
+              placeholder="Enter 6-digit code"
+              maxlength="6"
+              pattern="[0-9]{6}"
+            />
+            <button
+              @click="sendVerificationCode"
+              :disabled="loadingVerification || countdown > 0"
+              type="button"
+              class="resend-btn"
+            >
+              {{ countdown > 0 ? `Resend (${countdown}s)` : 'Resend' }}
+            </button>
+          </div>
+          <p class="verification-hint">
+            Check your email for the 6-digit verification code. Code expires in 10 minutes.
+          </p>
         </div>
         
         <div class="form-group">
@@ -80,7 +122,7 @@
           {{ success }}
         </div>
         
-        <button type="submit" :disabled="loading" class="submit-btn">
+        <button type="submit" :disabled="loading || emailVerificationStep !== 2 || !formData.verificationCode" class="submit-btn">
           <span v-if="loading" class="loading-spinner"></span>
           {{ loading ? 'Creating account... (This may take 10-15 seconds)' : 'Register' }}
         </button>
@@ -116,8 +158,14 @@ const formData = reactive({
   username: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  verificationCode: ''
 })
+
+const emailVerificationStep = ref(1) // 1: enter email, 2: enter code
+const loadingVerification = ref(false)
+const countdown = ref(0)
+let countdownTimer: number | null = null
 
 const validateForm = () => {
   // Clear previous errors
@@ -158,7 +206,77 @@ const validateForm = () => {
     return false
   }
   
+  // Verification code validation
+  if (emailVerificationStep.value === 2 && (!formData.verificationCode || formData.verificationCode.length !== 6)) {
+    error.value = 'Please enter the 6-digit verification code'
+    return false
+  }
+  
   return true
+}
+
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i
+  return emailRegex.test(email)
+}
+
+const sendVerificationCode = async () => {
+  if (!formData.email || !isValidEmail(formData.email)) {
+    error.value = 'Please enter a valid email address'
+    return
+  }
+  
+  loadingVerification.value = true
+  error.value = ''
+  success.value = ''
+  
+  // 创建一个带超时的fetch
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000) // 15秒超时
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/verification/send-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.email.toLowerCase().trim()
+      }),
+      signal: controller.signal
+    })
+    
+    clearTimeout(timeoutId)
+    
+    const data = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Failed to send verification code')
+    }
+    
+    emailVerificationStep.value = 2
+    success.value = 'Verification code sent! Check your email and console output for the code.'
+    
+    // Start countdown
+    countdown.value = 60
+    countdownTimer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(countdownTimer!)
+        countdownTimer = null
+      }
+    }, 1000)
+    
+  } catch (err: any) {
+    clearTimeout(timeoutId)
+    if (err.name === 'AbortError') {
+      error.value = 'Request timeout. Please check your network connection and try again.'
+    } else {
+      error.value = err.message || 'Failed to send verification code. Please try again.'
+    }
+  } finally {
+    loadingVerification.value = false
+  }
 }
 
 const handleRegister = async () => {
@@ -174,7 +292,8 @@ const handleRegister = async () => {
     const result = await authStore.register({
       username: formData.username.trim(),
       email: formData.email.toLowerCase().trim(),
-      password: formData.password
+      password: formData.password,
+      verification_code: formData.verificationCode
     })
     
     if (result.success) {
@@ -201,6 +320,13 @@ watch(() => props.isOpen, (newValue) => {
     formData.email = ''
     formData.password = ''
     formData.confirmPassword = ''
+    formData.verificationCode = ''
+    emailVerificationStep.value = 1
+    countdown.value = 0
+    if (countdownTimer) {
+      clearInterval(countdownTimer)
+      countdownTimer = null
+    }
   }
 })
 </script>
@@ -431,6 +557,89 @@ watch(() => props.isOpen, (newValue) => {
   }
 }
 
+/* Email verification styles */
+.email-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-input-group .form-input {
+  flex: 1;
+}
+
+.send-code-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.send-code-btn:hover:not(:disabled) {
+  background: #5a6fd8;
+}
+
+.send-code-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.email-verified {
+  color: #28a745;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.verification-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.verification-input {
+  flex: 1;
+  text-align: center;
+  letter-spacing: 2px;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.resend-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.resend-btn:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verification-hint {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
 /* 移动端特殊处理 */
 @media (max-width: 768px) {
   .modal-content {
@@ -442,6 +651,17 @@ watch(() => props.isOpen, (newValue) => {
     font-size: 16px; /* 必须16px以上防止iOS缩放 */
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+  }
+  
+  .email-input-group,
+  .verification-input-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .send-code-btn,
+  .resend-btn {
+    width: 100%;
   }
 }
 </style>

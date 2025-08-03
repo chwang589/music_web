@@ -97,7 +97,7 @@ const fetchNews = async () => {
   error.value = ''
   
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/news?limit=20`)
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news?limit=20`)
     newsList.value = response.data
   } catch (err: any) {
     error.value = 'Failed to load news'

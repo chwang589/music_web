@@ -37,8 +37,8 @@
         
         <div v-else class="user-menu">
           <span class="username">{{ authStore.username }}</span>
-          <button @click="$emit('openAdmin')" class="auth-btn admin-btn">
-            Admin
+          <button @click="$emit('openUserCenter')" class="auth-btn user-center-btn">
+            User Center
           </button>
           <button @click="logout" class="auth-btn logout-btn">
             Logout
@@ -53,7 +53,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
-defineEmits(['openLogin', 'openRegister', 'openAdmin'])
+defineEmits(['openLogin', 'openRegister', 'openUserCenter'])
 
 const authStore = useAuthStore()
 const isScrolled = ref(false)
@@ -293,7 +293,7 @@ onUnmounted(() => {
   color: #2c3e50;
 }
 
-.admin-btn {
+.user-center-btn {
   background: #4caf50;
   color: white;
 }
@@ -310,7 +310,7 @@ onUnmounted(() => {
   border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
-.admin-btn:hover {
+.user-center-btn:hover {
   background: #45a049;
 }
 

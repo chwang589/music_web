@@ -34,11 +34,11 @@ pkill -f "uvicorn.*app.main:app" 2>/dev/null || true
 pkill -f "vite.*dev" 2>/dev/null || true
 sleep 2
 
-# Configure frontend for network access
-echo "VITE_API_BASE_URL=http://$LOCAL_IP:8000" > frontend/.env
+# Configure frontend for network access with public API
+echo "VITE_API_BASE_URL=http://47.97.154.187:9007" > frontend/.env
 echo "VITE_HOST=0.0.0.0" >> frontend/.env
 echo "VITE_PORT=3000" >> frontend/.env
-echo "✅ Frontend configured for network access"
+echo "✅ Frontend configured for network access with public API"
 
 # Start backend with network binding
 echo "🚀 Starting backend server on all interfaces..."
@@ -73,9 +73,11 @@ echo ""
 echo "🎉 Music Web is now running on the network!"
 echo "📱 Access from any device on your network:"
 echo "   Frontend: http://$LOCAL_IP:3000"
-echo "   Backend API: http://$LOCAL_IP:8000"
+echo "   Backend API (local): http://$LOCAL_IP:8000"
+echo "   Backend API (public): http://47.97.154.187:9007"
 echo "   API Docs: http://$LOCAL_IP:8000/docs"
 echo ""
+echo "🌐 Frontend is configured to use public API endpoint"
 echo "📝 To test authentication manually:"
 echo "   ./test-auth.sh"
 echo ""

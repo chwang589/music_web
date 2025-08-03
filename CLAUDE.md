@@ -152,6 +152,12 @@ backend/
 ```bash
 ./start-network.sh
 ```
+> 🌐 **API穿透配置**: 前端已配置使用公网API地址 `http://47.97.154.187:9007`，无需局域网连接
+
+### API地址配置
+- **本地后端**: http://localhost:8000
+- **公网API**: http://47.97.154.187:9007 (已穿透)
+- **前端默认配置**: 使用公网API，支持跨网络访问
 
 ### 手动启动
 ```bash
@@ -160,7 +166,7 @@ cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# 前端
+# 前端（自动使用公网API）
 cd frontend
 npm install
 npm run dev
@@ -170,6 +176,16 @@ npm run dev
 ```bash
 ./test-auth.sh  # 测试认证API
 ```
+
+### 📧 邮箱验证配置
+- **发送邮箱**: wphtlip@gmail.com (系统邮箱)
+- **接收邮箱**: 用户注册时输入的邮箱
+- **验证方式**: 真实邮箱验证码（使用truemail算法）
+- **邮件发送**: 已启用Gmail SMTP
+- **配置文件**: `backend/email_config.py`
+
+> 📬 用户注册时验证码会从 wphtlip@gmail.com 发送到用户邮箱
+> ⚠️ 如果收不到邮件，请检查垃圾邮件文件夹
 
 ---
 

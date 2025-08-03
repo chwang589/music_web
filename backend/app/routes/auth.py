@@ -6,11 +6,21 @@ from app.schemas.user import UserCreate, UserLogin, User, Token
 from app.core.crud import create_user, authenticate_user, get_user_by_username, get_user_by_email
 from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.deps import get_current_user
+from app.core.email_service import email_service
 
 router = APIRouter()
 
 @router.post("/register", response_model=User)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    # Verify email code first
+    email = user.email.lower()
+    is_verified = email_service.verify_code(db, email, user.verification_code)
+    if not is_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired verification code"
+        )
+    
     db_user_username = get_user_by_username(db, username=user.username)
     if db_user_username:
         raise HTTPException(
@@ -18,7 +28,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             detail="Username already registered"
         )
     
-    db_user_email = get_user_by_email(db, email=user.email)
+    db_user_email = get_user_by_email(db, email=email)
     if db_user_email:
         raise HTTPException(
             status_code=400,
