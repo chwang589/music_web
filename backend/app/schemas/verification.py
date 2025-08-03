@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 
 class EmailVerificationRequest(BaseModel):
     email: EmailStr
@@ -15,7 +16,7 @@ class EmailVerificationResponse(BaseModel):
 class EmailVerificationStatus(BaseModel):
     email: str
     is_verified: bool
-    expires_at: datetime | None = None
+    expires_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
