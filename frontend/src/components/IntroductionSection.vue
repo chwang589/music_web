@@ -1,6 +1,19 @@
 <template>
   <section id="introduction" class="introduction-section">
-    <!-- Dynamic Background -->
+    <!-- Video Background Layer -->
+    <video 
+      ref="videoBackground"
+      class="video-background" 
+      autoplay 
+      loop 
+      muted 
+      playsinline
+      preload="auto"
+    >
+      <source src="/videos/intro.mp4" type="video/mp4">
+    </video>
+    
+    <!-- Dynamic Background Overlay -->
     <canvas ref="starCanvas" class="star-canvas"></canvas>
     
     
@@ -78,6 +91,7 @@ import { gsap } from 'gsap'
 const emit = defineEmits(['openLogin', 'updateProgress', 'nextSlide'])
 
 const starCanvas = ref<HTMLCanvasElement>()
+const videoBackground = ref<HTMLVideoElement>()
 const currentSlide = ref(0)
 const totalSlides = 5
 let scene: THREE.Scene
@@ -114,20 +128,20 @@ const initStarField = () => {
   
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setClearColor(0x000000, 1)
+  renderer.setClearColor(0x000000, 0) // 完全透明背景，让视频透过
 
   // Create colorful nebula clouds (fewer on mobile for performance)
   const isMobile = window.innerWidth < 768
   const nebulaCount = isMobile ? 3 : 5
   
   if (nebulaCount >= 3) {
-    createNebulaCloud(-300, -200, 0xff6b6b, 0.3) // Red nebula
-    createNebulaCloud(200, 100, 0x4ecdc4, 0.25)  // Cyan nebula  
-    createNebulaCloud(-100, 300, 0x9b59b6, 0.35) // Purple nebula
+    createNebulaCloud(-300, -200, 0xff6b6b, 0.15) // Red nebula - 降低透明度
+    createNebulaCloud(200, 100, 0x4ecdc4, 0.12)  // Cyan nebula - 降低透明度
+    createNebulaCloud(-100, 300, 0x9b59b6, 0.18) // Purple nebula - 降低透明度
   }
   if (nebulaCount >= 5) {
-    createNebulaCloud(400, -150, 0xf39c12, 0.2)  // Orange nebula
-    createNebulaCloud(-400, 200, 0x3498db, 0.28) // Blue nebula
+    createNebulaCloud(400, -150, 0xf39c12, 0.1)  // Orange nebula - 降低透明度
+    createNebulaCloud(-400, 200, 0x3498db, 0.14) // Blue nebula - 降低透明度
   }
 
   // Create multiple star layers for depth (reduce on mobile)
@@ -227,7 +241,7 @@ const createStarLayer = (count: number, size: number, color: number) => {
     size: size,
     vertexColors: true,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.6, // 降低星星透明度，让视频更清晰
     blending: THREE.AdditiveBlending
   })
 
@@ -382,11 +396,36 @@ const handleWheel = (event: WheelEvent) => {
   }
 }
 
+const initVideoBackground = () => {
+  if (!videoBackground.value) return
+  
+  // 确保视频静音自动播放
+  videoBackground.value.muted = true
+  videoBackground.value.playsInline = true
+  
+  // 处理视频加载和播放
+  videoBackground.value.addEventListener('loadeddata', () => {
+    videoBackground.value?.play().catch((error) => {
+      console.warn('Video autoplay failed:', error)
+      // 如果自动播放失败，可以显示一个播放按钮或降级到静态背景
+    })
+  })
+  
+  // 处理视频错误
+  videoBackground.value.addEventListener('error', (error) => {
+    console.warn('Video failed to load:', error)
+    // 如果视频加载失败，星云效果仍然可以正常工作
+  })
+}
+
 onMounted(() => {
   nextTick(() => {
     // Initialize slide system immediately to prevent text stacking
     initSlideSystem()
     updateProgress() // Initial progress
+    
+    // Initialize video background
+    initVideoBackground()
     
     // Initialize star field
     initStarField()
@@ -434,7 +473,19 @@ onUnmounted(() => {
   z-index: 0;
 }
 
-/* 星云背景样式 */
+/* 视频背景样式 */
+.video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  opacity: 0.7; /* 降低视频不透明度，让星云效果更突出 */
+}
+
+/* 星云背景叠加层样式 */
 .star-canvas {
   position: absolute;
   top: 0;
@@ -442,6 +493,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   z-index: 2;
+  pointer-events: none; /* 确保不阻止鼠标事件 */
 }
 
 
@@ -486,6 +538,7 @@ onUnmounted(() => {
   color: white;
   max-width: 800px;
   padding: 0 2rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8); /* 添加阴影增强可读性 */
 }
 
 .main-quote {
@@ -499,87 +552,98 @@ onUnmounted(() => {
   font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 400;
   line-height: 1.3;
-  color: white;
+  color: #f0f0f0; /* 稍微柔和的白色 */
   margin-bottom: 1.5rem;
   font-style: italic;
+  text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.9); /* 更强的阴影 */
 }
 
 .quote-author {
   font-family: 'Inter', sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(240, 240, 240, 0.9); /* 提高可读性 */
   font-style: italic;
   display: block;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .brand-title {
   font-family: 'Inter', sans-serif;
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 300;
-  color: white;
+  color: #f5f5f5; /* 更亮的白色 */
   margin-bottom: 0.5rem;
   line-height: 1.2;
+  text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
 }
 
 .brand-subtitle {
   font-family: 'Inter', sans-serif;
   font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(245, 245, 245, 0.95); /* 提高对比度 */
   margin: 0;
   line-height: 1.2;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .philosophy-line {
   font-family: 'Inter', sans-serif;
   font-size: clamp(1.3rem, 3vw, 2rem);
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(240, 240, 240, 0.9); /* 提高可读性 */
   margin: 0.2rem 0;
   line-height: 1.4;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .vision-text {
   font-family: 'Inter', sans-serif;
   font-size: clamp(1.2rem, 3vw, 1.8rem);
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(240, 240, 240, 0.85); /* 提高可读性 */
   margin-bottom: 2rem;
   line-height: 1.5;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .highlight-text {
-  color: #4CAF50;
+  color: #66BB6A; /* 更亮的绿色，在视频背景上更显眼 */
   font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); /* 更强的阴影 */
 }
 
 .difference-text {
   font-family: 'Inter', sans-serif;
   font-size: clamp(1.2rem, 3vw, 1.8rem);
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(240, 240, 240, 0.85); /* 提高可读性 */
   margin: 0;
   line-height: 1.5;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .trust-text {
-  color: #2196F3;
+  color: #42A5F5; /* 更亮的蓝色，在视频背景上更显眼 */
   font-weight: 600;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); /* 更强的阴影 */
 }
 
 .final-title {
   font-family: 'Inter', sans-serif;
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 400;
-  color: white;
+  color: #f5f5f5; /* 更亮的白色 */
   margin: 0;
   line-height: 1.3;
+  text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
 }
 
 .final-title strong {
-  color: #FF9800;
+  color: #FFB74D; /* 更亮的橙色，在视频背景上更显眼 */
   font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); /* 更强的阴影 */
 }
 
 /* 滚动指示器样式 */
@@ -601,10 +665,11 @@ onUnmounted(() => {
 .scroll-text {
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(240, 240, 240, 0.8); /* 提高可读性 */
   text-decoration: underline;
   font-weight: 300;
   letter-spacing: 0.02em;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .scroll-indicator.hidden {

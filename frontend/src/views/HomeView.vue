@@ -66,7 +66,10 @@ const totalSlides = 2
 let isTransitioning = ref(false)
 
 const updateIntroProgress = (progress: number) => {
-  introProgress.value = progress
+  // 只有在Introduction页面时才更新进度
+  if (currentSlide.value === 0) {
+    introProgress.value = progress
+  }
 }
 
 const switchToRegister = () => {
@@ -82,6 +85,11 @@ const switchToLogin = () => {
 const navigateToSlide = (slideIndex: number) => {
   if (slideIndex >= 0 && slideIndex < totalSlides && !isTransitioning.value) {
     currentSlide.value = slideIndex
+    
+    // 当导航到News页面时，设置进度条为100%
+    if (slideIndex === 1) {
+      introProgress.value = 100
+    }
   }
 }
 
@@ -89,6 +97,12 @@ const nextSlide = () => {
   if (currentSlide.value < totalSlides - 1 && !isTransitioning.value) {
     isTransitioning.value = true
     currentSlide.value++
+    
+    // 当切换到News页面时，设置进度条为100%
+    if (currentSlide.value === 1) {
+      introProgress.value = 100
+    }
+    
     setTimeout(() => {
       isTransitioning.value = false
     }, 800)
@@ -99,6 +113,10 @@ const prevSlide = () => {
   if (currentSlide.value > 0 && !isTransitioning.value) {
     isTransitioning.value = true
     currentSlide.value--
+    
+    // 当从News返回到Introduction时，由于Introduction内部进度保持不变，
+    // IntroductionSection会自动恢复正确的进度
+    
     setTimeout(() => {
       isTransitioning.value = false
     }, 800)
@@ -117,7 +135,17 @@ const handleWheel = (event: WheelEvent) => {
     return
   }
   
-  // For all other slides, always use wheel for slide navigation
+  // If we're in news slide (currentSlide === 1), allow going back to introduction
+  if (currentSlide.value === 1) {
+    event.preventDefault()
+    // Only allow going back up to introduction, not forward
+    if (event.deltaY < -50) {
+      prevSlide()
+    }
+    return
+  }
+  
+  // For any other future slides, allow wheel navigation
   event.preventDefault()
   
   if (event.deltaY > 50) {
@@ -129,6 +157,18 @@ const handleWheel = (event: WheelEvent) => {
 
 const handleKeyDown = (event: KeyboardEvent) => {
   if (isTransitioning.value) return
+  
+  // If we're in news slide, only allow going back to introduction
+  if (currentSlide.value === 1) {
+    switch (event.key) {
+      case 'ArrowUp':
+      case 'PageUp':
+        event.preventDefault()
+        prevSlide()
+        break
+    }
+    return
+  }
   
   switch (event.key) {
     case 'ArrowDown':

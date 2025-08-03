@@ -64,7 +64,14 @@ const emit = defineEmits(['openLogin', 'openRegister', 'navigateToSlide'])
 const router = useRouter()
 const authStore = useAuthStore()
 const isScrolled = ref(false)
-const newsProgress = ref(0)
+// News progress should be 100% when user is on news page or has visited it
+const newsProgress = computed(() => {
+  // If currently on news page, show 100%
+  if (props.currentSlide === 1) return 100
+  // If still on introduction but completed it (progress is 100%), show 100% for news too
+  if (props.currentSlide === 0 && (props.introProgress || 0) >= 100) return 100
+  return 0
+})
 
 // Determine current section based on slide index
 const currentSection = computed(() => {
