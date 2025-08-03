@@ -8,7 +8,21 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const currentUsername = ref<string | null>(localStorage.getItem('username'))
   
-  const isAuthenticated = computed(() => token.value !== null)
+  const isAuthenticated = computed(() => {
+    const hasToken = !!token.value
+    const hasUsername = !!currentUsername.value
+    console.log('Auth check - hasToken:', hasToken, 'hasUsername:', hasUsername)
+    return hasToken && hasUsername
+  })
+  
+  // Set up axios interceptor to add auth header to all requests
+  const setAuthHeader = (authToken: string | null) => {
+    if (authToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+    } else {
+      delete axios.defaults.headers.common['Authorization']
+    }
+  }
   
   const login = async (inputUsername: string, password: string) => {
     try {
@@ -24,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', access_token)
       localStorage.setItem('username', responseUsername)
       
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+      setAuthHeader(access_token)
       
       return { success: true }
     } catch (error: any) {
@@ -46,12 +60,24 @@ export const useAuthStore = defineStore('auth', () => {
     currentUsername.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('username')
-    delete axios.defaults.headers.common['Authorization']
+    setAuthHeader(null)
   }
+  
+  // Add response interceptor to handle 401 errors globally
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 && token.value) {
+        // Token is invalid, logout automatically
+        logout()
+      }
+      return Promise.reject(error)
+    }
+  )
   
   // Initialize axios with token if exists
   if (token.value) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+    setAuthHeader(token.value)
   }
   
   return {

@@ -114,22 +114,56 @@ onMounted(() => {
 
 <style scoped>
 .news-section {
-  min-height: 100vh;
-  padding: 80px 0;
-  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  height: 100vh;
+  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+  position: relative;
+  overflow: hidden;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 80px 20px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* 明显的滚动条样式 */
+  scrollbar-width: auto;
+  scrollbar-color: rgba(255, 255, 255, 0.6) rgba(255, 255, 255, 0.1);
+}
+
+.container::-webkit-scrollbar {
+  width: 12px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.container::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, 0.8));
 }
 
 .section-title {
   text-align: center;
   font-size: 3rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: white;
   margin-bottom: 3rem;
   position: relative;
 }
@@ -270,7 +304,11 @@ onMounted(() => {
 /* 移动端1列布局 */
 @media (max-width: 767px) {
   .news-section {
-    padding: 60px 0;
+    height: 100vh;
+  }
+
+  .container {
+    padding: 60px 15px;
   }
 
   .news-grid {
@@ -301,7 +339,8 @@ onMounted(() => {
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 15px;
+    padding: 50px 15px;
+    /* 在移动端确保有足够的滚动空间 */
   }
 
   .section-title {

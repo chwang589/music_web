@@ -1,44 +1,70 @@
 <template>
   <section id="introduction" class="introduction-section">
+    <!-- Dynamic Background -->
     <canvas ref="starCanvas" class="star-canvas"></canvas>
-    <div class="starwars-container" v-if="showStarWars">
-      <div class="starwars-wrapper">
-        <p v-for="(line, index) in starWarsText" :key="index" 
-           :style="getStarWarsStyle(index)">
-          {{ line }}
-        </p>
-      </div>
-    </div>
-    <div class="content-wrapper" :class="{ hidden: showStarWars }">
-      <div class="text-content">
-        <h1 class="main-title">MUSIC WEB</h1>
-        <div class="dynamic-text">
-          <span class="text-line" :class="{ active: currentText === 0 }">Discover Amazing Music</span>
-          <span class="text-line" :class="{ active: currentText === 1 }">Share Your Stories</span>
-          <span class="text-line" :class="{ active: currentText === 2 }">Connect With Artists</span>
-          <span class="text-line" :class="{ active: currentText === 3 }">Experience The Beat</span>
+    
+    
+    <!-- Slide Content Container -->
+    <div class="slides-container">
+      <!-- Slide 1: Quote -->
+      <div class="cineslider-slide scroll-section" data-section="1">
+        <div class="slide-content">
+          <blockquote class="main-quote">
+            <p class="quote-text">
+              When you want something,<br>
+              all the universe conspires<br>
+              in helping you to achieve it.
+            </p>
+            <cite class="quote-author">Paulo Coelho</cite>
+          </blockquote>
         </div>
-        <p class="subtitle">Where music meets community</p>
       </div>
       
-      <div class="cta-buttons">
-        <button @click="scrollToNews" class="primary-btn explore-btn">
-          <span class="btn-text">Explore News</span>
-          <div class="btn-glow"></div>
-        </button>
-        <button @click="$emit('openLogin')" class="primary-btn join-btn">
-          <span class="btn-text">Join Community</span>
-          <div class="btn-glow"></div>
-        </button>
-        <button @click="triggerStarWars" class="primary-btn magic-btn">
-          <span class="btn-icon">✨</span>
-          <span class="btn-text">Experience Magic</span>
-          <div class="btn-glow"></div>
-        </button>
+      <!-- Slide 2: Brand Statement -->
+      <div class="cineslider-slide scroll-section" data-section="2">
+        <div class="slide-content">
+          <h1 class="brand-title">NeuraFlow: Where AI meets music:</h1>
+          <h2 class="brand-subtitle">neural networks, infinite melodies.</h2>
+        </div>
+      </div>
+      
+      <!-- Slide 3: Philosophy -->
+      <div class="cineslider-slide scroll-section" data-section="3">
+        <div class="slide-content">
+          <p class="philosophy-line">Intelligence is the single</p>
+          <p class="philosophy-line">most powerful force</p>
+          <p class="philosophy-line">shaping music's digital future.</p>
+        </div>
+      </div>
+      
+      <!-- Slide 4: Vision -->
+      <div class="cineslider-slide scroll-section" data-section="4">
+        <div class="slide-content">
+          <p class="vision-text">
+            We believe AI-powered music journalism<br>
+            will revolutionize how we<br>
+            <strong class="highlight-text">discover, understand, and connect</strong><br>
+            with music.
+          </p>
+          <p class="difference-text">
+            The future of music news<br>
+            is intelligent, personalized,<br>
+            and <strong class="trust-text">limitless</strong>.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Slide 5: Final Statement -->
+      <div class="cineslider-slide scroll-section" data-section="5">
+        <div class="slide-content">
+          <h3 class="final-title">NeuraFlow is the <strong>intelligent bridge</strong> between AI and music</h3>
+        </div>
       </div>
     </div>
     
-    <div class="scroll-indicator" @click="scrollToNews" :class="{ hidden: showStarWars }">
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator" @click="nextSlide" v-show="currentSlide < totalSlides - 1">
+      <span class="scroll-text">scroll down</span>
       <div class="scroll-arrow"></div>
     </div>
   </section>
@@ -49,12 +75,11 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as THREE from 'three'
 import { gsap } from 'gsap'
 
-defineEmits(['openLogin'])
+const emit = defineEmits(['openLogin', 'updateProgress', 'nextSlide'])
 
 const starCanvas = ref<HTMLCanvasElement>()
-const currentText = ref(0)
-const showStarWars = ref(false)
-let textInterval: number
+const currentSlide = ref(0)
+const totalSlides = 5
 let scene: THREE.Scene
 let camera: THREE.PerspectiveCamera  
 let renderer: THREE.WebGLRenderer
@@ -62,38 +87,17 @@ let stars: THREE.Points
 let nebulaClouds: THREE.Mesh[] = []
 let animationId: number
 let time = 0
+let isScrolling = false
 
-const starWarsText = [
-  'When you want something,',
-  'all the universe conspires',  
-  'in helping you to achieve it.',
-  '',
-  'Paulo Coelho',
-  '',
-  '',
-  'Music Web is that conspiracy:',
-  'the conspiracy of creativity.',
-  '',
-  '',
-  'Trust is the single',
-  'most important ingredient',
-  'missing from digital relationships.',
-  '',
-  '',
-  'We believe in the power',
-  'of music to connect souls',
-  'across time and space.',
-  '',
-  '',
-  'Music Web is a digital mechanism',
-  'of trust and discovery'
-]
+const updateProgress = () => {
+  // Calculate progress: 0-100% based on current slide
+  const progress = (currentSlide.value / (totalSlides - 1)) * 100
+  emit('updateProgress', progress)
+}
 
-const scrollToNews = () => {
-  const newsSection = document.getElementById('news')
-  if (newsSection) {
-    newsSection.scrollIntoView({ behavior: 'smooth' })
-  }
+const scrollToNext = () => {
+  // Instead of scrolling to news section, emit event to go to next slide
+  emit('nextSlide')
 }
 
 const initStarField = () => {
@@ -270,32 +274,6 @@ const animate = () => {
   renderer.render(scene, camera)
 }
 
-const triggerStarWars = () => {
-  showStarWars.value = true
-  
-  nextTick(() => {
-    const wrapper = document.querySelector('.starwars-wrapper')
-    if (wrapper) {
-      gsap.fromTo(wrapper, 
-        { y: '100vh' },
-        { y: '-200vh', duration: 25, ease: 'none' }
-      )
-    }
-
-    setTimeout(() => {
-      showStarWars.value = false
-    }, 25000)
-  })
-}
-
-const getStarWarsStyle = (index: number) => {
-  const progress = index * 0.1
-  return {
-    transform: `translateY(${progress * 100}%) perspective(300px) rotateX(25deg)`,
-    opacity: Math.max(0, 1 - progress * 0.3),
-    fontSize: `${Math.max(0.8, 1 - progress * 0.1)}rem`
-  }
-}
 
 const handleResize = () => {
   if (!camera || !renderer) return
@@ -305,44 +283,144 @@ const handleResize = () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
-onMounted(() => {
-  textInterval = setInterval(() => {
-    currentText.value = (currentText.value + 1) % 4
-  }, 3000)
+const initSlideSystem = () => {
+  // Set initial state immediately - only show first slide
+  gsap.set('.scroll-section', {
+    opacity: 0,
+    y: 50,
+    pointerEvents: 'none'
+  })
 
+  gsap.set('[data-section="1"]', {
+    opacity: 1,
+    y: 0,
+    pointerEvents: 'auto'
+  })
+}
+
+const nextSlide = () => {
+  if (isScrolling) return
+  
+  // If at last slide, scroll to next section
+  if (currentSlide.value >= totalSlides - 1) {
+    scrollToNext()
+    return
+  }
+  
+  isScrolling = true
+  const current = currentSlide.value
+  const next = current + 1
+  
+  // Hide current slide and show next slide simultaneously
+  gsap.to(`[data-section="${current + 1}"]`, {
+    opacity: 0,
+    y: -30,
+    duration: 0.3,
+    pointerEvents: 'none'
+  })
+  
+  // Show next slide
+  gsap.to(`[data-section="${next + 1}"]`, {
+    opacity: 1,
+    y: 0,
+    duration: 0.5,
+    delay: 0.1,
+    ease: 'power2.out',
+    pointerEvents: 'auto',
+    onComplete: () => {
+      currentSlide.value = next
+      updateProgress()
+      isScrolling = false
+    }
+  })
+}
+
+const prevSlide = () => {
+  if (isScrolling || currentSlide.value <= 0) return
+  
+  isScrolling = true
+  const current = currentSlide.value
+  const prev = current - 1
+  
+  // Hide current slide
+  gsap.to(`[data-section="${current + 1}"]`, {
+    opacity: 0,
+    y: 30,
+    duration: 0.3,
+    pointerEvents: 'none'
+  })
+  
+  // Show previous slide
+  gsap.to(`[data-section="${prev + 1}"]`, {
+    opacity: 1,
+    y: 0,
+    duration: 0.5,
+    delay: 0.1,
+    ease: 'power2.out',
+    pointerEvents: 'auto',
+    onComplete: () => {
+      currentSlide.value = prev
+      updateProgress()
+      isScrolling = false
+    }
+  })
+}
+
+const handleWheel = (event: WheelEvent) => {
+  // Handle internal slide navigation within introduction section
+  event.preventDefault()
+  
+  if (event.deltaY > 0) {
+    // If at last slide, go to next main slide (news)
+    if (currentSlide.value >= totalSlides - 1) {
+      scrollToNext()
+    } else {
+      nextSlide()
+    }
+  } else {
+    prevSlide()
+  }
+}
+
+onMounted(() => {
   nextTick(() => {
+    // Initialize slide system immediately to prevent text stacking
+    initSlideSystem()
+    updateProgress() // Initial progress
+    
+    // Initialize star field
     initStarField()
   })
 
+  // Add wheel event listener for slide navigation
+  window.addEventListener('wheel', handleWheel, { passive: false })
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  if (textInterval) {
-    clearInterval(textInterval)
-  }
   if (animationId) {
     cancelAnimationFrame(animationId)
   }
   if (renderer) {
     renderer.dispose()
   }
+  
+  window.removeEventListener('wheel', handleWheel)
   window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&display=swap');
 
+/* 基础样式 */
 .introduction-section {
   position: relative;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  height: 100vh; /* Fixed height like feedmusic.com */
+  overflow: hidden; /* Prevent scrolling */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #000 0%, #111 100%);
 }
 
 .introduction-section::before {
@@ -352,31 +430,11 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(155, 89, 182, 0.18) 0%, transparent 50%),
-    radial-gradient(circle at 60% 70%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
-    linear-gradient(135deg, #001122 0%, #002244 50%, #000811 100%);
-  animation: nebulaDrift 20s ease-in-out infinite;
+  background: linear-gradient(180deg, #000 0%, #111 100%);
   z-index: 0;
 }
 
-@keyframes nebulaDrift {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.8;
-  }
-  33% {
-    transform: scale(1.05) rotate(1deg);
-    opacity: 0.9;
-  }
-  66% {
-    transform: scale(0.95) rotate(-1deg);
-    opacity: 0.85;
-  }
-}
-
+/* 星云背景样式 */
 .star-canvas {
   position: absolute;
   top: 0;
@@ -386,258 +444,167 @@ onUnmounted(() => {
   z-index: 2;
 }
 
-.starwars-container {
+
+
+/* Slides container */
+.slides-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+/* Cineslider slide styles */
+.cineslider-slide {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 10;
-  perspective: 400px;
-  overflow: hidden;
-  background: radial-gradient(ellipse at center, #001122 0%, #000000 70%);
-}
-
-.starwars-wrapper {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 800px;
-  text-align: center;
-  color: #ffd700;
-  font-family: 'Arial', sans-serif;
-  font-weight: bold;
-  line-height: 1.8;
-  transform-style: preserve-3d;
-}
-
-.starwars-wrapper p {
-  font-size: 1.8rem;
-  margin: 1rem 0;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-  transform-origin: 50% 100%;
-}
-
-.content-wrapper {
-  text-align: center;
-  color: white;
-  z-index: 10;
-  position: relative;
-  will-change: transform;
-  transition: opacity 0.5s ease;
-}
-
-.content-wrapper.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.text-content {
-  margin-bottom: 3rem;
-}
-
-.main-title {
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  font-weight: 700;
-  margin-bottom: 2rem;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #c7d2fe 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-  will-change: transform;
-  animation: titleGlow 1.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-@keyframes titleGlow {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(0.9);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(100, 150, 255, 0.6);
-  }
-}
-
-.dynamic-text {
-  position: relative;
-  height: 60px;
-  margin-bottom: 2rem;
-  overflow: hidden;
-}
-
-.text-line {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(100%);
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(1.2rem, 4vw, 1.6rem);
-  font-weight: 400;
-  opacity: 0;
-  white-space: nowrap;
-  will-change: transform, opacity;
-  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.01em;
-}
-
-.text-line.active {
-  transform: translateX(-50%) translateY(0);
-  opacity: 0.9;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(0.9rem, 3vw, 1.1rem);
-  font-weight: 400;
-  opacity: 0.6;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.02em;
-  will-change: transform;
-  animation: subtitleGlow 1.8s cubic-bezier(0.23, 1, 0.32, 1) 0.4s forwards;
-}
-
-@keyframes subtitleGlow {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 0.8;
-    transform: translateY(0);
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-  }
-}
-
-.cta-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-  will-change: transform;
-  animation: buttonsGlow 1.8s cubic-bezier(0.23, 1, 0.32, 1) 0.8s forwards;
-  opacity: 0;
-}
-
-@keyframes buttonsGlow {
-  0% {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.primary-btn {
-  position: relative;
-  padding: 16px 32px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  color: rgba(255, 255, 255, 0.9);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
-  overflow: hidden;
-  min-width: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  will-change: transform, opacity;
 }
 
-.primary-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
-}
-
-.primary-btn .btn-text {
-  position: relative;
-  z-index: 2;
-}
-
-.primary-btn .btn-icon {
-  position: relative;
-  z-index: 2;
-  font-size: 1.1em;
-}
-
-.btn-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+/* Scroll sections - initial hidden state to prevent text stacking */
+.scroll-section {
   opacity: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  transition: opacity 0.3s ease;
-  border-radius: 8px;
+  transform: translateY(50px);
+  pointer-events: none;
 }
 
-.primary-btn:hover .btn-glow {
+/* First section visible by default */
+.scroll-section[data-section="1"] {
   opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-.explore-btn:hover {
-  border-color: rgba(100, 150, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(100, 150, 255, 0.15);
+.slide-content {
+  text-align: center;
+  color: white;
+  max-width: 800px;
+  padding: 0 2rem;
 }
 
-.join-btn:hover {
-  border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.15);
+.main-quote {
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
-.magic-btn:hover {
-  border-color: rgba(167, 139, 250, 0.4);
-  box-shadow: 0 8px 32px rgba(167, 139, 250, 0.15);
+.quote-text {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  line-height: 1.3;
+  color: white;
+  margin-bottom: 1.5rem;
+  font-style: italic;
 }
 
-.magic-btn::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-  transform: rotate(45deg) translateX(-100%);
-  transition: transform 0.6s ease;
-  opacity: 0;
+.quote-author {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  display: block;
 }
 
-.magic-btn:hover::before {
-  transform: rotate(45deg) translateX(100%);
-  opacity: 1;
+.brand-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 300;
+  color: white;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
 }
 
+.brand-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.philosophy-line {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0.2rem 0;
+  line-height: 1.4;
+}
+
+.vision-text {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.highlight-text {
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+.difference-text {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.trust-text {
+  color: #2196F3;
+  font-weight: 600;
+}
+
+.final-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 400;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.final-title strong {
+  color: #FF9800;
+  font-weight: 700;
+}
+
+/* 滚动指示器样式 */
 .scroll-indicator {
   position: absolute;
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   will-change: transform;
-  animation: starBounce 2.5s ease-in-out infinite;
+  animation: scrollBounce 2.5s ease-in-out infinite;
   transition: opacity 0.3s ease;
+}
+
+.scroll-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: underline;
+  font-weight: 300;
+  letter-spacing: 0.02em;
 }
 
 .scroll-indicator.hidden {
@@ -654,80 +621,27 @@ onUnmounted(() => {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-@keyframes starBounce {
+@keyframes scrollBounce {
   0%, 100% { 
     transform: translateX(-50%) translateY(0);
-    opacity: 0.8;
+    opacity: 0.7;
   }
   50% { 
     transform: translateX(-50%) translateY(-8px);
     opacity: 1;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
   }
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .introduction-section {
+  .slide-content {
     padding: 0 1rem;
-  }
-
-  .content-wrapper {
     max-width: 100%;
-  }
-
-  .text-content {
-    margin-bottom: 2rem;
-  }
-
-  .cta-buttons {
-    gap: 0.75rem;
-    padding: 0 1rem;
-  }
-  
-  .primary-btn {
-    min-width: 100%;
-    max-width: 320px;
-    padding: 14px 24px;
-    font-size: 0.85rem;
-  }
-
-  .starwars-wrapper {
-    width: 95%;
-    padding: 0 1rem;
-  }
-
-  .starwars-wrapper p {
-    font-size: 1.2rem;
-    line-height: 1.6;
-  }
-}
-
-@media (max-width: 480px) {
-  .cta-buttons {
-    padding: 0;
-  }
-
-  .primary-btn {
-    padding: 12px 20px;
-    font-size: 0.8rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .main-title,
-  .text-line,
-  .subtitle,
-  .cta-buttons,
   .scroll-indicator {
-    animation: none;
-  }
-  
-  .text-line.active {
-    transition: opacity 0.3s ease;
-  }
-
-  .magic-btn::before,
-  .magic-btn:hover::before {
     animation: none;
   }
 }

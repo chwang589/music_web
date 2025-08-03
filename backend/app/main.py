@@ -6,8 +6,8 @@ from app.routes import auth, news, verification
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Music Web API",
-    description="Backend API for Music Web application",
+    title="NeuraFlow API",
+    description="AI Music News Platform - Where artificial intelligence meets music journalism",
     version="1.0.0"
 )
 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feed Music Reference - Original Site Structure</title>
+    <style>
+        /* Reference from http://www.feedmusic.com/ */
+    </style>
+</head>
+<body>
+    <!-- FEEDMUSIC.COM 滚动结构分析 -->
+    
+    <!-- 主要结构：cineslider-container -->
+    <div class="cineslider-container">
+        <div class="cineslider-wrapper">
+            
+            <!-- 第一屏：introduction slide -->
+            <div id="homepage-introduction" class="cineslider-slide cineslider-slide-active">
+                <!-- 内容包括：starwars滚动文字，视频背景，scroll down按钮 -->
+                <div class="starwars-container">
+                    <!-- 文字内容滚动效果 -->
+                </div>
+                <a href="#" class="scroll-down">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- 第二屏：technology slide -->
+            <div id="homepage-technology" class="cineslider-slide" style="display: none;">
+                <!-- 视频弹窗内容 -->
+                <a href="#" class="scroll-down">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- 第三屏：tech-spotlight slide -->
+            <div id="homepage-tech-spotlight" class="cineslider-slide" style="display: none;">
+                <!-- 内容页面 -->
+                <a href="#" class="scroll-down invert">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- 第四屏：why-music slide -->
+            <div id="homepage-why-music" class="cineslider-slide" style="display: none;">
+                <!-- 视频内容 -->
+                <a href="#" class="scroll-down">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- 第五屏：feed-app slide -->
+            <div id="homepage-feed-app" class="cineslider-slide" style="display: none;">
+                <!-- 最终页面内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+    关键发现：
+    1. 使用 cineslider-slide 类的div作为每个全屏页面
+    2. 只有一个slide显示（cineslider-slide-active），其他隐藏（display: none）
+    3. 每个slide都有scroll-down链接用于导航到下一屏
+    4. 整体是slide切换模式，不是连续滚动模式
+    5. 滚动事件控制slide的显示/隐藏和切换动画
+    -->
+
+</body>
+</html>

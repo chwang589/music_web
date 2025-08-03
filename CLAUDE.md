@@ -1,8 +1,8 @@
-# Music Web 项目开发文档
+# NeuraFlow 项目开发文档
 
 ## ✅ 项目目标 - 已完成
 
-实现一个音乐网站的前后端（参考网站 http://www.feedmusic.com/），使用 Claude Code 完成所有核心功能。
+实现一个AI音乐新闻平台的前后端（参考网站 http://www.feedmusic.com/），使用 Claude Code 完成所有核心功能。NeuraFlow 是一个结合人工智能、音乐资讯和科技创新的新闻平台。
 
 ### 前端要求 - ✅ 已完成
 1. **第一屏（Introduction）** ✅

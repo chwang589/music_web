@@ -2,7 +2,7 @@
   <nav class="navigation-bar" :class="{ scrolled: isScrolled }">
     <div class="nav-container">
       <div class="nav-brand">
-        <h2>Music Web</h2>
+        <h2>NeuraFlow</h2>
       </div>
       
       <div class="nav-sections">
@@ -11,7 +11,7 @@
             Introduction
           </button>
           <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: introProgress + '%' }"></div>
+            <div class="progress-fill" :style="{ width: (introProgress || 0) + '%' }"></div>
           </div>
         </div>
         
@@ -37,7 +37,7 @@
         
         <div v-else class="user-menu">
           <span class="username">{{ authStore.username }}</span>
-          <button @click="$emit('openUserCenter')" class="auth-btn user-center-btn">
+          <button @click="goToUserCenter" class="auth-btn user-center-btn">
             User Center
           </button>
           <button @click="logout" class="auth-btn logout-btn">
@@ -50,22 +50,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-defineEmits(['openLogin', 'openRegister', 'openUserCenter'])
+const props = defineProps<{
+  introProgress?: number
+  currentSlide?: number
+}>()
 
+const emit = defineEmits(['openLogin', 'openRegister', 'navigateToSlide'])
+
+const router = useRouter()
 const authStore = useAuthStore()
 const isScrolled = ref(false)
-const currentSection = ref('introduction')
-const introProgress = ref(0)
 const newsProgress = ref(0)
 
+// Determine current section based on slide index
+const currentSection = computed(() => {
+  if (props.currentSlide === 0) return 'introduction'
+  if (props.currentSlide === 1) return 'news'
+  return 'introduction'
+})
+
 const scrollToSection = (section: string) => {
-  const element = document.getElementById(section)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' })
+  // Use slide navigation instead of scrollIntoView
+  if (section === 'introduction') {
+    emit('navigateToSlide', 0)
+  } else if (section === 'news') {
+    emit('navigateToSlide', 1)
   }
+}
+
+const goToUserCenter = () => {
+  router.push('/user-center')
 }
 
 const logout = () => {
@@ -73,42 +91,8 @@ const logout = () => {
 }
 
 const handleScroll = () => {
-  const scrollTop = window.pageYOffset
-  const windowHeight = window.innerHeight
-  
-  isScrolled.value = scrollTop > 50
-  
-  // Calculate progress for introduction section
-  const introSection = document.getElementById('introduction')
-  if (introSection) {
-    const introTop = introSection.offsetTop
-    const introHeight = introSection.offsetHeight
-    
-    if (scrollTop >= introTop && scrollTop < introTop + introHeight) {
-      currentSection.value = 'introduction'
-      introProgress.value = Math.min(100, ((scrollTop - introTop) / introHeight) * 100)
-    } else if (scrollTop < introTop) {
-      introProgress.value = 0
-    } else {
-      introProgress.value = 100
-    }
-  }
-  
-  // Calculate progress for news section
-  const newsSection = document.getElementById('news')
-  if (newsSection) {
-    const newsTop = newsSection.offsetTop
-    const newsHeight = newsSection.offsetHeight
-    
-    if (scrollTop >= newsTop - windowHeight / 2) {
-      currentSection.value = 'news'
-      if (scrollTop >= newsTop) {
-        newsProgress.value = Math.min(100, ((scrollTop - newsTop) / newsHeight) * 100)
-      }
-    } else {
-      newsProgress.value = 0
-    }
-  }
+  // For slide system, we don't use scroll position to determine section
+  // Instead, we use the currentSlide prop
 }
 
 onMounted(() => {
@@ -155,10 +139,19 @@ onUnmounted(() => {
   margin: 0;
   font-weight: 700;
   transition: color 0.3s ease;
+  background: linear-gradient(135deg, #00d4ff, #667eea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
 .scrolled .nav-brand h2 {
-  color: #2c3e50;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
 }
 
 .nav-sections {

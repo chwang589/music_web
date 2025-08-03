@@ -1,7 +1,7 @@
 <template>
-  <div v-if="isOpen" class="user-center-overlay" @click="$emit('close')">
-    <div class="user-center-panel" @click.stop>
-      <div class="user-center-header">
+  <div v-if="isOpen" :class="isFullPage ? 'user-center-fullpage' : 'user-center-overlay'" @click="!isFullPage && $emit('close')">
+    <div :class="isFullPage ? 'user-center-fullpage-panel' : 'user-center-panel'" @click.stop>
+      <div v-if="!isFullPage" class="user-center-header">
         <h2>User Center</h2>
         <button @click="$emit('close')" class="close-btn">&times;</button>
       </div>
@@ -348,6 +348,7 @@ interface UserInfo {
 
 const props = defineProps<{
   isOpen: boolean
+  isFullPage?: boolean
 }>()
 
 const emit = defineEmits(['close'])
@@ -399,7 +400,7 @@ const avatarText = computed(() => {
 // 推荐图片
 const suggestedImages = [
   {
-    url: 'https://images.unsplash.com/photo-1459749187778-3663c29ab4b3?w=500',
+    url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=500',
     description: 'Music Festival'
   },
   {
@@ -432,18 +433,37 @@ const quickTemplates = [
 
 const fetchUserInfo = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/auth/me`)
+    if (!authStore.isAuthenticated || !authStore.token) {
+      console.error('No authentication token found')
+      profileError.value = 'Please log in to view your profile'
+      return
+    }
+
+    console.log('Fetching user info with token:', authStore.token?.substring(0, 20) + '...')
+    
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+    
+    console.log('User info response:', response.data)
     userInfo.value = response.data
-    editProfile.username = response.data.username
-    editProfile.email = response.data.email
+    profileError.value = ''
     
     // Calculate stats
     const joinDate = new Date(response.data.created_at)
     const now = new Date()
     userStats.value.daysActive = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24))
     userStats.value.lastLoginDays = 0 // For demo, could implement actual last login tracking
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch user info:', error)
+    if (error.response?.status === 401) {
+      profileError.value = 'Session expired. Please log in again.'
+      authStore.logout()
+    } else {
+      profileError.value = 'Failed to load user information'
+    }
   }
 }
 
@@ -458,8 +478,9 @@ const fetchUserNews = async () => {
       news.creator === authStore.username
     )
     userStats.value.newsCount = userNews.value.length
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch user news:', error)
+    // The auth store interceptor will handle 401 errors automatically
   } finally {
     loadingUserNews.value = false
   }
@@ -545,6 +566,7 @@ const handleCreateNews = async () => {
     
   } catch (error: any) {
     newsError.value = error.response?.data?.detail || 'Failed to create news'
+    // The auth store interceptor will handle 401 errors automatically
   } finally {
     loadingNews.value = false
   }
@@ -572,6 +594,7 @@ const handleEditNews = async () => {
     fetchUserNews()
   } catch (error: any) {
     console.error('Failed to update news:', error)
+    // The auth store interceptor will handle 401 errors automatically
   }
 }
 
@@ -583,6 +606,7 @@ const deleteNews = async (newsId: number) => {
     fetchUserNews()
   } catch (error: any) {
     console.error('Failed to delete news:', error)
+    // The auth store interceptor will handle 401 errors automatically
   }
 }
 
@@ -617,6 +641,17 @@ watch(() => props.isOpen, (newValue) => {
   }
 })
 
+// Watch userInfo changes and sync to editProfile
+watch(() => userInfo.value, (newUserInfo) => {
+  if (newUserInfo.username && newUserInfo.email) {
+    editProfile.username = newUserInfo.username
+    editProfile.email = newUserInfo.email
+    // Clear password fields when user info is updated
+    editProfile.newPassword = ''
+    editProfile.confirmPassword = ''
+  }
+}, { deep: true })
+
 onMounted(() => {
   if (props.isOpen) {
     fetchUserInfo()
@@ -639,6 +674,12 @@ onMounted(() => {
   backdrop-filter: blur(5px);
 }
 
+.user-center-fullpage {
+  width: 100%;
+  min-height: 100vh;
+  background: transparent;
+}
+
 .user-center-panel {
   background: white;
   border-radius: 15px;
@@ -650,6 +691,17 @@ onMounted(() => {
   animation: modalSlideIn 0.3s ease-out;
   display: flex;
   flex-direction: column;
+}
+
+.user-center-fullpage-panel {
+  background: white;
+  width: 100%;
+  min-height: 100vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 @keyframes modalSlideIn {
@@ -702,6 +754,28 @@ onMounted(() => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* 确保滚动正常工作 */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto;
+  scrollbar-color: rgba(102, 126, 234, 0.6) rgba(102, 126, 234, 0.1);
+}
+
+.user-center-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.user-center-content::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+}
+
+.user-center-content::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.6);
+  border-radius: 4px;
+}
+
+.user-center-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.8);
 }
 
 .user-center-tabs {
@@ -742,6 +816,9 @@ onMounted(() => {
   flex: 1;
   padding: 25px;
   overflow-y: auto;
+  /* 确保内容区域可以正常滚动 */
+  max-height: calc(100vh - 200px);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Profile Section Styles */
@@ -1227,18 +1304,49 @@ onMounted(() => {
   background: #5a6268;
 }
 
-/* Mobile Responsiveness */
+/* 平板端响应式设计 (768px - 1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .user-center-panel {
+    width: 85%;
+    max-width: 800px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .suggestion-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .news-item {
+    padding: 18px;
+  }
+  
+  .avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
+  }
+}
+
+/* 移动端响应式设计 (最大768px) */
 @media (max-width: 768px) {
   .user-center-panel {
     width: 95%;
-    margin: 20px;
-    max-height: 90vh;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .user-center-fullpage-panel {
+    padding: 10px;
   }
   
   .avatar-section {
     flex-direction: column;
     text-align: center;
     gap: 15px;
+    padding: 15px;
   }
   
   .stats-grid {
@@ -1249,6 +1357,7 @@ onMounted(() => {
   .news-item {
     flex-direction: column;
     gap: 15px;
+    padding: 15px;
   }
   
   .news-item-actions {
@@ -1258,26 +1367,45 @@ onMounted(() => {
   
   .template-buttons {
     flex-direction: column;
+    gap: 8px;
   }
   
   .suggestion-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
   
   .news-meta {
     flex-direction: column;
     gap: 5px;
   }
+  
+  .profile-form, .stats-section {
+    padding: 20px;
+  }
+  
+  .quick-templates {
+    padding: 15px;
+  }
 }
 
+/* 小屏手机响应式设计 (最大480px) */
 @media (max-width: 480px) {
+  .user-center-panel {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+  
   .tab-content {
     padding: 15px;
   }
   
   .tab-btn {
     font-size: 14px;
-    padding: 12px 15px;
+    padding: 12px 8px;
+    gap: 4px;
   }
   
   .avatar {
@@ -1287,7 +1415,195 @@ onMounted(() => {
   }
   
   .user-basic-info h3 {
+    font-size: 18px;
+  }
+  
+  .user-basic-info .user-email {
+    font-size: 14px;
+  }
+  
+  .user-basic-info .join-date {
+    font-size: 12px;
+  }
+  
+  .profile-form, .stats-section {
+    padding: 15px;
+  }
+  
+  .form-input, .form-textarea {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-item {
+    padding: 12px;
+  }
+  
+  .stat-number {
     font-size: 20px;
+  }
+  
+  .news-item-content h4 {
+    font-size: 16px;
+  }
+  
+  .edit-btn, .delete-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  .quick-templates {
+    padding: 12px;
+  }
+  
+  .template-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .suggestion-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .suggestion-item img {
+    width: 50px;
+    height: 35px;
+  }
+  
+  .suggestion-item span {
+    font-size: 0.7rem;
+  }
+}
+
+/* 超小屏响应式设计 (最大360px) */
+@media (max-width: 360px) {
+  .user-center-header {
+    padding: 15px;
+  }
+  
+  .user-center-header h2 {
+    font-size: 18px;
+  }
+  
+  .tab-content {
+    padding: 10px;
+  }
+  
+  .tab-btn {
+    font-size: 12px;
+    padding: 10px 6px;
+  }
+  
+  .icon-profile, .icon-news {
+    display: none;
+  }
+  
+  .avatar-section {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .user-basic-info h3 {
+    font-size: 16px;
+  }
+  
+  .profile-form, .stats-section, .quick-templates {
+    padding: 10px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+  }
+  
+  .form-input, .form-textarea {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  
+  .submit-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .news-item {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .news-item-content h4 {
+    font-size: 14px;
+  }
+  
+  .news-item-content p {
+    font-size: 13px;
+  }
+  
+  .news-item-actions {
+    gap: 5px;
+  }
+  
+  .edit-btn, .delete-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .suggestion-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .template-buttons {
+    gap: 6px;
+  }
+  
+  .template-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+/* 横屏模式适配 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .user-center-panel {
+    max-height: 95vh;
+  }
+  
+  .tab-content {
+    padding: 10px;
+  }
+  
+  .avatar-section {
+    flex-direction: row;
+    padding: 10px;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .profile-form, .stats-section {
+    padding: 10px;
   }
 }
 </style>
