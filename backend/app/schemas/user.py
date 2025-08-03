@@ -8,6 +8,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    verification_code: str
 
 class UserLogin(BaseModel):
     username: str

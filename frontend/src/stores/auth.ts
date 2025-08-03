@@ -2,23 +2,34 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
-const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api`
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api`
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const currentUsername = ref<string | null>(localStorage.getItem('username'))
   
-  const isAuthenticated = computed(() => token.value !== null)
+  const isAuthenticated = computed(() => {
+    const hasToken = !!token.value
+    const hasUsername = !!currentUsername.value
+    console.log('Auth check - hasToken:', hasToken, 'hasUsername:', hasUsername)
+    return hasToken && hasUsername
+  })
+  
+  // Set up axios interceptor to add auth header to all requests
+  const setAuthHeader = (authToken: string | null) => {
+    if (authToken) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+    } else {
+      delete axios.defaults.headers.common['Authorization']
+    }
+  }
   
   const login = async (inputUsername: string, password: string) => {
     try {
-      console.log('🔐 Attempting login with:', { username: inputUsername, API_BASE_URL })
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         username: inputUsername,
         password
       })
-      
-      console.log('✅ Login response:', response.data)
       
       const { access_token, username: responseUsername } = response.data
       token.value = access_token
@@ -27,18 +38,15 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', access_token)
       localStorage.setItem('username', responseUsername)
       
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+      setAuthHeader(access_token)
       
-      console.log('✅ Login successful, token stored')
       return { success: true }
     } catch (error: any) {
-      console.error('❌ Login error:', error)
-      console.error('❌ Error response:', error.response?.data)
       return { success: false, error: error.response?.data?.detail || 'Login failed' }
     }
   }
   
-  const register = async (userData: { username: string; email: string; password: string }) => {
+  const register = async (userData: { username: string; email: string; password: string; verification_code: string }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, userData)
       return { success: true, data: response.data }
@@ -52,12 +60,24 @@ export const useAuthStore = defineStore('auth', () => {
     currentUsername.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('username')
-    delete axios.defaults.headers.common['Authorization']
+    setAuthHeader(null)
   }
+  
+  // Add response interceptor to handle 401 errors globally
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 && token.value) {
+        // Token is invalid, logout automatically
+        logout()
+      }
+      return Promise.reject(error)
+    }
+  )
   
   // Initialize axios with token if exists
   if (token.value) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+    setAuthHeader(token.value)
   }
   
   return {

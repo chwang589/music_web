@@ -16,6 +16,12 @@ def get_current_user(
     payload = verify_token(token)
     username = payload.get("username")
     
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+    
     user = get_user_by_username(db, username)
     if user is None:
         raise HTTPException(
