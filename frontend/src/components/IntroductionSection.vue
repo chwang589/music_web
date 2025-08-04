@@ -25,7 +25,6 @@
     <!-- 左上角Logo -->
     <div class="brand-logo" ref="brandLogo">
       <div class="logo-icon">N</div>
-      <div class="logo-text">NeuraFlow</div>
     </div>
 
     <!-- 初始加载Logo动画 -->
@@ -43,7 +42,7 @@
       <p>NeuraFlow facilitates seamless discovery of music content, connecting artists, fans, and industry professionals in a <b>trusted</b>, dynamic, and innovative digital ecosystem.</p>
     </div>
 
-    <!-- 星球大战滚动文字 - 完全复制FeedMusic原版 -->
+    <!-- 星球大战滚动文字 - 保留滚动效果但不响应用户交互 -->
     <div class="starwars-container" ref="starwarsContainer">
       <div class="starwars-wrapper" ref="starwarsWrapper">
         <p>When you want something,</p>
@@ -81,7 +80,7 @@
     <!-- Scroll Down 按钮 -->
     <a href="#" class="scroll-down" @click.prevent="nextSlide">
       <i class="icon"></i>
-      <span>scroll down</span>
+      <span>SCROLL DOWN</span>
     </a>
   </section>
 </template>
@@ -192,10 +191,10 @@ class StarWarsScroll {
       // 调整初始位置，确保四行文字都在屏幕可见区域
       const baseOffset = 10 // 从10%位置开始，给四行文字适当间距
       
-      // Paulo Coelho使用稍小的间距，让它更接近第三行
+      // Paulo Coelho使用更小的间距，让它更接近第三行
       let distanceMultiplier
       if (index === 3) {
-        distanceMultiplier = index * (this.options.offsetSentenceDistance * 0.85) // Paulo Coelho间距缩小15%
+        distanceMultiplier = index * (this.options.offsetSentenceDistance * 0.6) // Paulo Coelho间距缩小40%
       } else {
         distanceMultiplier = index * this.options.offsetSentenceDistance
       }
@@ -279,7 +278,7 @@ class StarWarsScroll {
         // 触发进度事件
         this.trigger('progress', this.scrollProgress)
         
-        // 检查是否完成
+        // 检查是否完成 - 移除页面切换逻辑
         if (this.scrollProgress >= 1) {
           this.trigger('complete')
         } else if (this.scrollProgress <= 0) {
@@ -394,7 +393,6 @@ const nextSlide = () => {
 
 const handleWheel = (event: WheelEvent) => {
   // 如果滚动向下且StarWars动画接近完成(95%以上)，则切换到下一页
-  // 增加阈值让用户有更多时间停留在最后一句
   if (event.deltaY > 0 && starwarsScroll && starwarsScroll.scrollProgress > 0.95) {
     event.preventDefault()
     scrollToNext()
@@ -424,16 +422,21 @@ const initVideoBackground = () => {
 const initStarWarsScroll = () => {
   if (!starwarsContainer.value) return
   
-  // 初始化StarWars滚动 - 使用FeedMusic原版参数
+  // 初始化StarWars滚动 - 保留原版交互但不切换页面
   starwarsScroll = new StarWarsScroll(starwarsContainer.value, {
     debug: false,
-    offsetSentenceDistance: 70, // 缩小整体行间距
+    offsetSentenceDistance: 60, // 缩小整体行间距
     offsetScale: 0.25, // 恢复原版缩放
     offsetAlpha: 0.2, // 适当调整透明度，让Paulo Coelho可见
     stagger: 0.5,
     duration: 1,
     mousewheelThrottle: 10,
     onInit: () => {
+      // 初始化完成后显示StarWars容器
+      if (starwarsContainer.value) {
+        starwarsContainer.value.style.opacity = '1'
+      }
+      
       // 如果是从其他页面回来，设置为末尾进度
       const currentProgress = (props.initialProgress || 0) / 100
       if (currentProgress > 0.9) {
@@ -509,6 +512,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('wheel', handleWheel)
+  document.removeEventListener('wheel', handleWheel)
   if (starwarsScroll) {
     starwarsScroll.destroy()
   }
@@ -600,9 +604,6 @@ onUnmounted(() => {
   position: absolute;
   top: 30px;
   left: 30px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   z-index: 50;
   opacity: 0.9;
   transition: all 0.3s ease;
@@ -613,30 +614,14 @@ onUnmounted(() => {
   transform: translateY(-2px);
 }
 
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  background: linear-gradient(135deg, #ffffff, #f0f0f0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.brand-logo .logo-icon {
+  font-size: 48px;
+  font-weight: 900;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  transform: skew(-15deg);
 }
 
 /* 初始加载Logo动画 */
@@ -750,12 +735,12 @@ onUnmounted(() => {
 }
 
 .intro-paragraph p {
-  font-size: 8px;
-  line-height: 1.3;
-  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 6px;
   color: #fff;
   font-weight: 300;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 /* 星球大战滚动文字容器 - 大幅扩大显示区域 */
@@ -769,6 +754,8 @@ onUnmounted(() => {
   z-index: 15;
   perspective: 1000px;
   transform-style: preserve-3d;
+  opacity: 0; /* 初始隐藏，等待初始化完成 */
+  transition: opacity 0.5s ease;
 }
 
 .starwars-wrapper {
@@ -785,13 +772,14 @@ onUnmounted(() => {
 .starwars-wrapper p {
   position: absolute;
   left: 50%;
-  font-size: 32px; /* 回到FeedMusic原版大小 */
+  font-size: 52px; /* 再次增大字体 */
   text-align: center;
   white-space: nowrap;
   font-weight: 400;
+  font-style: italic;
   letter-spacing: 2px;
-  width: 1000px;
-  margin-left: -500px;
+  width: 1200px; /* 增大宽度适应更大的字体 */
+  margin-left: -600px;
   transform-origin: center center;
   color: #fff;
   opacity: 1;
@@ -799,38 +787,33 @@ onUnmounted(() => {
   backface-visibility: hidden;
   transform: translateZ(0);
   /* 简化文字效果 */
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  font-family: 'Ubuntu', sans-serif;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
 }
 
 .starwars-wrapper p strong {
   color: #fff;
   font-weight: 700;
-}
-
-.starwars-wrapper p strong {
-  color: #fff;
-  font-weight: 700;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
 }
 
 .starwars-wrapper p.author-signature {
   color: #fff;
-  font-weight: 300;
+  font-weight: 900; /* 最大粗细 */
   font-style: italic;
-  font-size: 42px; /* 进一步增大Paulo Coelho字体 */
-  font-family: 'Georgia', 'Times New Roman', 'Playfair Display', serif; /* 艺术字体 */
+  font-size: 68px; /* 进一步增大Paulo Coelho字体 */
+  font-family: 'Helvetica Neue Black', 'Arial Black', 'Helvetica Neue', sans-serif; /* 更粗的字体 */
   background: linear-gradient(135deg, #ffffff, #f0f0f0, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 
-    0 0 15px rgba(255, 255, 255, 0.4),
-    0 0 30px rgba(255, 255, 255, 0.2);
-  letter-spacing: 5px;
+    0 0 25px rgba(255, 255, 255, 0.6),
+    0 0 50px rgba(255, 255, 255, 0.4);
+  letter-spacing: 5px; /* 适当调整字母间距 */
   white-space: nowrap;
-  width: 1000px;
-  margin-left: -500px;
+  width: 1200px; /* 增大宽度适应更大的字体 */
+  margin-left: -600px;
   text-align: center;
   position: absolute;
   left: 50%;
@@ -838,10 +821,11 @@ onUnmounted(() => {
   will-change: transform, opacity, scale;
   backface-visibility: hidden;
   transform: translateZ(0);
-  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+  filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.5));
+  font-stretch: expanded; /* 拉伸字体让它看起来更胖 */
 }
 
-/* Scroll Down 按钮 - FeedMusic原版鼠标样式 */
+/* Scroll Down 按钮 - 与鼠标重合在中心位置 */
 .scroll-down {
   position: absolute;
   bottom: 30px;
@@ -849,18 +833,24 @@ onUnmounted(() => {
   transform: translateX(-50%);
   color: #fff;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 16px;
   opacity: 0.8;
   text-align: center;
   cursor: pointer;
   z-index: 100;
   transition: all 0.3s ease;
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+  font-style: italic;
+  font-weight: 500;
 }
 
 .scroll-down:hover {
-  opacity: 1;
+  opacity: 0; /* 点击时文字消失 */
   transform: translateX(-50%) translateY(-2px);
+}
+
+.scroll-down:active {
+  opacity: 0; /* 点击时完全透明 */
 }
 
 .scroll-down .icon {

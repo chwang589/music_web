@@ -2,13 +2,13 @@
   <nav class="navigation-bar" :class="{ scrolled: isScrolled, invert: invertColors }">
     <div class="nav-container">
       <div class="nav-brand">
-        <h2>NeuraFlow</h2>
+        <!-- Logo removed -->
       </div>
       
       <div class="nav-sections">
         <div class="nav-item" :class="{ active: currentSection === 'introduction' }">
           <button @click="scrollToSection('introduction')" class="nav-button">
-            Introduction
+            INTRODUCTION
             <div class="progress-border" v-if="showIntroProgress">
               <div class="progress-line" :style="{ width: introProgress + '%' }"></div>
             </div>
@@ -17,7 +17,7 @@
         
         <div class="nav-item" :class="{ active: currentSection === 'news' }">
           <button @click="scrollToSection('news')" class="nav-button">
-            News
+            NEWS
           </button>
         </div>
       </div>
@@ -63,9 +63,9 @@ const authStore = useAuthStore()
 const isScrolled = ref(false)
 const invertColors = ref(false)
 
-// 显示进度条的条件 - 只有在Introduction页面且进度大于0时显示
+// 显示进度条的条件 - 在Introduction页面时始终显示（包括0%）
 const showIntroProgress = computed(() => {
-  return props.currentSlide === 0 && (props.introProgress || 0) > 0
+  return props.currentSlide === 0
 })
 
 // 确定当前section
@@ -123,9 +123,9 @@ onMounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: none;
   transition: all 0.4s ease;
   height: 70px;
 }
@@ -157,32 +157,7 @@ onMounted(() => {
   justify-content: space-between;
 }
 
-.nav-brand h2 {
-  color: white;
-  margin: 0;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #00d4ff, #667eea);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-}
-
-.scrolled .nav-brand h2 {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
-}
-
-.invert .nav-brand h2 {
-  background: linear-gradient(135deg, #fff, #ccc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* Logo styles removed */
 
 .nav-sections {
   display: flex;
