@@ -25,7 +25,6 @@
             @openLogin="showLoginModal = true" 
             @updateProgress="updateIntroProgress"
             @nextSlide="nextSlide"
-            :initialProgress="introProgress"
           />
         </div>
         
@@ -79,11 +78,9 @@ const updateIntroProgress = (progress: number) => {
   // 只有在Introduction页面时才更新进度
   if (currentSlide.value === 0) {
     introProgress.value = progress
-  } else {
-    // 在news页面时，introduction进度条清零
-    introProgress.value = 0
   }
 }
+
 
 const switchToRegister = () => {
   showLoginModal.value = false
@@ -100,6 +97,59 @@ const slideTo = (targetIndex: number, immediate = false) => {
   if (isTransitioning.value || targetIndex === currentSlide.value) return
   if (targetIndex < 0 || targetIndex >= totalSlides) return
   
+  // 跟踪访问状态
+  if (targetIndex === 1) {
+    console.log('Setting hasVisitedNews to true in localStorage')
+    localStorage.setItem('hasVisitedNews', 'true')
+  }
+  
+  // 如果从其他页面回到Introduction页面，设置进度条为100%并强制设置文字状态
+  if (targetIndex === 0 && currentSlide.value !== 0) {
+    // 检查是否曾经访问过News页面
+    const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
+    if (hasVisitedNews) {
+      introProgress.value = 100
+      
+      // 强制设置StarWars文字到100%状态（显示最后一句话）
+      setTimeout(() => {
+        const starwarsWrapper = document.querySelector('.starwars-wrapper')
+        if (starwarsWrapper) {
+          const sentences = starwarsWrapper.querySelectorAll('p')
+          console.log('=== Forcing 100% text state ===')
+          console.log('Found sentences:', sentences.length)
+          
+          sentences.forEach((sentence, index) => {
+            const text = sentence.textContent?.trim()
+            console.log(`Sentence ${index}: ${text}`)
+            
+            if (index === sentences.length - 1) {
+              // 最后一句话显示在中心位置
+              console.log('Setting last sentence visible:', text)
+              Object.assign(sentence.style, {
+                transform: 'translateY(10%) scale(1)',
+                opacity: '1',
+                display: 'block'
+              })
+            } else {
+              // 其他句子隐藏或移到上方
+              Object.assign(sentence.style, {
+                transform: 'translateY(-50%) scale(1.5)',
+                opacity: '0',
+                display: 'block'
+              })
+            }
+          })
+          
+          // 隐藏介绍段落文字
+          const introParagraph = document.querySelector('.intro-paragraph')
+          if (introParagraph) {
+            introParagraph.style.opacity = '0'
+          }
+        }
+      }, 100)
+    }
+  }
+  
   const direction = targetIndex > currentSlide.value ? 'down' : 'up'
   const duration = immediate ? 0.1 : 1.8  // 延长换页时间
   
@@ -107,6 +157,10 @@ const slideTo = (targetIndex: number, immediate = false) => {
   
   const currentSlideEl = cinesliderContainer.value?.querySelector('.cineslider-slide-active') as HTMLElement
   const targetSlideEl = cinesliderContainer.value?.querySelectorAll('.cineslider-slide')[targetIndex] as HTMLElement
+  
+  // 立即更新currentSlide以让导航栏响应
+  const previousSlide = currentSlide.value
+  currentSlide.value = targetIndex
   
   if (!currentSlideEl || !targetSlideEl || !shifter1.value || !shifter2.value) return
   
@@ -147,10 +201,12 @@ const slideTo = (targetIndex: number, immediate = false) => {
   timeline.eventCallback('onComplete', () => {
     // 清理状态
     gsap.set([shifter1.value, shifter2.value, currentSlideEl], { display: 'none' })
-    currentSlide.value = targetIndex
     
+    // 动画完成后重置fromNewsPage标志
     setTimeout(() => {
       isTransitioning.value = false
+      
+      // 清理完成
     }, 100)
   })
 }
@@ -240,6 +296,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('wheel', handleWheel, { passive: false })
   window.addEventListener('keydown', handleKeyDown)
+  
+  // 开发用：按F12清除localStorage重置状态
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'F12') {
+      localStorage.removeItem('hasVisitedNews')
+      location.reload()
+    }
+  })
 })
 
 onUnmounted(() => {

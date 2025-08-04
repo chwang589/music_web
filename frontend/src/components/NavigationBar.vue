@@ -18,6 +18,9 @@
         <div class="nav-item" :class="{ active: currentSection === 'news' }">
           <button @click="scrollToSection('news')" class="nav-button">
             NEWS
+            <div class="progress-border" v-if="showNewsProgress">
+              <div class="progress-line" :style="{ width: '100%' }"></div>
+            </div>
           </button>
         </div>
       </div>
@@ -66,6 +69,11 @@ const invertColors = ref(false)
 // 显示进度条的条件 - 在Introduction页面时始终显示（包括0%）
 const showIntroProgress = computed(() => {
   return props.currentSlide === 0
+})
+
+// 显示News进度条的条件 - 在News页面时始终显示（包括0%）
+const showNewsProgress = computed(() => {
+  return props.currentSlide === 1
 })
 
 // 确定当前section

@@ -90,9 +90,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { gsap } from 'gsap'
 import Hammer from 'hammerjs'
 
-const props = defineProps<{
-  initialProgress?: number
-}>()
+// 不需要props了，直接从localStorage读取
 
 const emit = defineEmits(['openLogin', 'updateProgress', 'nextSlide'])
 
@@ -237,7 +235,7 @@ class StarWarsScroll {
         staggerDelay += this.options.duration
       }
       
-      // 继续向上消失阶段
+      // 继续向上消失阶段 - 最后一句不完全消失，保持在100%可见
       if (index < this.sentences.length - 1) {
         for (step = 0; step < maxSteps; step++) {
           const targetY = baseOffset - this.options.offsetSentenceDistance * (step + 1)
@@ -251,6 +249,16 @@ class StarWarsScroll {
           }, staggerDelay)
           staggerDelay += this.options.duration
         }
+      } else {
+        // 最后一句话在100%时保持可见状态
+        this.timeline.to(sentence, {
+          duration: this.options.duration,
+          y: baseOffset + '%',
+          opacity: 1,
+          scale: 1,
+          ease: 'none',
+          force3D: true
+        }, staggerDelay)
       }
     })
   }
@@ -392,9 +400,10 @@ const nextSlide = () => {
 }
 
 const handleWheel = (event: WheelEvent) => {
-  // 如果滚动向下且StarWars动画接近完成(95%以上)，则切换到下一页
-  if (event.deltaY > 0 && starwarsScroll && starwarsScroll.scrollProgress > 0.95) {
+  // 如果滚动向下且StarWars动画接近完成(90%以上)，则准备切换到下一页
+  if (event.deltaY > 0 && starwarsScroll && starwarsScroll.scrollProgress > 0.9) {
     event.preventDefault()
+    // 立即触发页面切换，让导航栏先响应
     scrollToNext()
   }
 }
@@ -431,25 +440,64 @@ const initStarWarsScroll = () => {
     stagger: 0.5,
     duration: 1,
     mousewheelThrottle: 10,
-    onInit: () => {
+    onInit: function() {
       // 初始化完成后显示StarWars容器
       if (starwarsContainer.value) {
         starwarsContainer.value.style.opacity = '1'
       }
       
-      // 如果是从其他页面回来，设置为末尾进度
-      const currentProgress = (props.initialProgress || 0) / 100
-      if (currentProgress > 0.9) {
-        starwarsScroll.timeline.progress(0.95)
-        starwarsScroll.scrollProgress = 0.95
-      }
-    },
-    onProgress: (progress: number) => {
-      updateProgress(progress * 100)
+      // 检查是否是第一次访问
+      const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
+      console.log('=== StarWars Init Debug ===')
+      console.log('hasVisitedNews from localStorage:', hasVisitedNews)
       
-      // 控制介绍文字的显示/隐藏
+      // 设置初始化标志，防止onProgress覆盖
+      this.isInitializing = true
+      
+      // 简化初始化逻辑，只设置进度，文字状态由HomeView处理
+      if (!hasVisitedNews) {
+        // 第一次访问，从0%开始
+        console.log('First visit - setting to 0%')
+        this.scrollProgress = 0
+        updateProgress(0)
+      } else {
+        // 从其他页面返回，设置为100%（文字状态由HomeView处理）
+        console.log('Return visit - setting progress to 100%')
+        this.scrollProgress = 1.0
+        updateProgress(100)
+        
+        // 隐藏介绍文字
+        if (introParagraph.value) {
+          gsap.set(introParagraph.value, { opacity: 0 })
+        }
+      }
+      
+      // 短暂延迟后允许onProgress正常工作
+      const self = this
+      setTimeout(() => {
+        self.isInitializing = false
+        console.log('StarWars initialization completed')
+      }, 100)
+    },
+    onProgress: function(progress: number) {
+      // 避免在初始化时覆盖手动设置的进度
+      if (!this.isInitializing) {
+        updateProgress(progress * 100)
+      }
+      
+      // 控制介绍文字的显示/隐藏 - 与进度条保持一致
       if (introParagraph.value) {
-        const shouldShow = progress <= 0.01 // 只有在0%时显示
+        const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
+        let shouldShow
+        
+        if (hasVisitedNews) {
+          // 从其他页面返回时，100%时文字已经滚动完成所以隐藏，向下滚动时再次显示
+          shouldShow = progress < 0.99
+        } else {
+          // 第一次访问时，初始0%时显示，开始滚动后逐渐隐藏
+          shouldShow = progress <= 0.01
+        }
+        
         const currentOpacity = parseFloat(window.getComputedStyle(introParagraph.value).opacity)
         
         if (shouldShow && currentOpacity < 1) {
@@ -467,11 +515,17 @@ const initStarWarsScroll = () => {
         }
       }
     },
-    onComplete: () => {
-      // 动画完成后在最后一句停留2秒，然后切换到下一页
-      setTimeout(() => {
-        scrollToNext()
-      }, 2000)
+    onComplete: function() {
+      // 动画完成后立即切换到下一页
+      scrollToNext()
+    },
+    onStart: function() {
+      // 开始滚动时的处理
+      console.log('StarWars scroll started')
+    },
+    onReverse: function() {
+      // 倒序滚动时的处理
+      console.log('StarWars scroll reversed')
     }
   })
   
@@ -502,8 +556,27 @@ const initIntroAnimation = () => {
 
 onMounted(() => {
   nextTick(() => {
-    // 启动初始加载动画
-    initIntroAnimation()
+    // 检查是否是第一次访问
+    const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
+    
+    console.log('=== IntroductionSection onMounted ===')
+    console.log('hasVisitedNews in onMounted:', hasVisitedNews)
+    
+    if (!hasVisitedNews) {
+      // 第一次访问，播放完整的loading动画
+      console.log('First visit - starting intro animation')
+      initIntroAnimation()
+    } else {
+      // 从其他页面返回，跳过loading动画
+      console.log('Return visit - skipping intro animation, initializing directly')
+      if (introLoader.value) {
+        introLoader.value.style.display = 'none'
+      }
+      introAnimationComplete = true
+      // 立即初始化组件
+      initVideoBackground()
+      initStarWarsScroll()
+    }
   })
 
   // Add wheel event listener for page navigation
