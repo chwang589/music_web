@@ -5,7 +5,9 @@
         <!-- Logo removed -->
       </div>
       
-      <div class="nav-sections">
+      <!-- 移除汉包菜单按钮 -->
+      
+      <div class="nav-sections mobile-open"> <!-- 移动端始终显示 -->
         <div class="nav-item" :class="{ active: currentSection === 'introduction' }">
           <button @click="scrollToSection('introduction')" class="nav-button">
             INTRODUCTION
@@ -25,13 +27,19 @@
         </div>
       </div>
       
-      <div class="nav-auth">
+      <div class="nav-auth mobile-open"> <!-- 移动端始终显示 -->
         <div v-if="!authStore.isAuthenticated" class="auth-buttons">
           <button @click="$emit('openLogin')" class="auth-btn login-btn">
-            Login
+            LOGIN
+            <div class="progress-border">
+              <div class="progress-line" style="width: 0%"></div>
+            </div>
           </button>
           <button @click="$emit('openRegister')" class="auth-btn register-btn">
-            Register
+            REGISTER
+            <div class="progress-border">
+              <div class="progress-line" style="width: 0%"></div>
+            </div>
           </button>
         </div>
         
@@ -65,6 +73,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const isScrolled = ref(false)
 const invertColors = ref(false)
+// 移除汉包菜单相关变量
 
 // 显示进度条的条件 - 在Introduction页面时始终显示（包括0%）
 const showIntroProgress = computed(() => {
@@ -103,7 +112,10 @@ const scrollToSection = (section: string) => {
   } else if (section === 'news') {
     emit('navigateToSlide', 1)
   }
+  // 移除汉包菜单关闭逻辑
 }
+
+// 移除汉包菜单切换函数
 
 const goToUserCenter = () => {
   router.push('/user-center')
@@ -197,7 +209,7 @@ onMounted(() => {
 }
 
 .scrolled .nav-button {
-  color: #2c3e50;
+  color: #3a4d7a;
 }
 
 .invert .nav-button {
@@ -210,7 +222,7 @@ onMounted(() => {
 }
 
 .scrolled .nav-button:hover {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(120, 150, 220, 0.15);
 }
 
 .invert .nav-button:hover {
@@ -222,8 +234,8 @@ onMounted(() => {
 }
 
 .scrolled .nav-item.active .nav-button {
-  background: rgba(102, 126, 234, 0.15);
-  color: #667eea;
+  background: rgba(120, 150, 220, 0.2);
+  color: #7896dc;
 }
 
 .invert .nav-item.active .nav-button {
@@ -374,32 +386,273 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: white;
+  margin: 3px 0;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.scrolled .mobile-menu-toggle span {
+  background: #ffffff; /* 滚动时汉包图标也使用白色 */
+}
+
+.invert .mobile-menu-toggle span {
+  background: #000;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .nav-container {
-    padding: 0 15px;
+  .mobile-menu-toggle {
+    display: flex;
   }
   
   .nav-sections {
-    gap: 1rem;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    left: auto;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 0;
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .scrolled .nav-sections {
+    right: 180px !important;
+  }
+  
+  .nav-auth {
+    position: fixed;
+    bottom: 10px;
+    left: 20px;
+    right: 20px;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0;
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .scrolled .nav-auth {
+    position: fixed !important;
+    top: 20px !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: 20px !important;
+    width: auto !important;
+    justify-content: flex-end !important;
+    gap: 20px !important;
+  }
+  
+  /* 移动端始终显示 */
+  
+  /* 移除不需要的样式 */
+  
+  .scrolled .nav-sections,
+  .scrolled .nav-auth {
+    background: transparent !important; /* 滚动时也保持透明 */
+  }
+  
+  .scrolled .nav-auth {
+    position: fixed !important;
+    bottom: 10px !important;
+    left: 20px !important;
+    right: 20px !important;
+  }
+  
+  .nav-item {
+    margin: 0;
+    position: relative;
+    flex: 0 0 auto;
   }
   
   .nav-button {
-    font-size: 0.9rem;
-    padding: 6px 12px;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #ffffff;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-weight: 600;
   }
   
-  .progress-border {
-    width: 40px;
+  .nav-button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-2px);
+  }
+  
+  .nav-button.active {
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  .scrolled .nav-button {
+    color: #2c3e50 !important;
+    background: transparent !important;
+  }
+  
+  .auth-buttons {
+    flex-direction: row;
+    gap: 15px;
+    align-items: center;
   }
   
   .auth-btn {
-    padding: 6px 15px;
-    font-size: 0.8rem;
+    padding: 12px 20px;
+    text-align: center;
+    color: #ffffff !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .auth-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-2px);
+    color: #ffffff !important;
+  }
+  
+  .scrolled .auth-btn {
+    color: #2c3e50 !important;
+  }
+  
+  .scrolled .auth-btn:hover {
+    background: rgba(44, 62, 80, 0.1) !important;
+    color: #2c3e50 !important;
+  }
+  
+  .user-menu {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
   }
   
   .username {
-    font-size: 0.9rem;
+    text-align: center;
+    padding: 12px 16px;
+    color: #ffffff !important;
+    font-weight: 500;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 8px;
+    font-size: 1rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  
+  .scrolled .username {
+    color: #2c3e50 !important;
+  }
+  
+  /* 移动端用户信息统一样式 */
+  .user-menu .username {
+    text-align: center;
+    padding: 12px 20px;
+    color: #ffffff !important;
+    font-weight: 600;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+  }
+  
+  .user-menu .username:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-2px);
+  }
+  
+  .scrolled .user-menu .username {
+    color: #2c3e50 !important;
+  }
+  
+  .scrolled .user-menu .username:hover {
+    background: rgba(44, 62, 80, 0.1) !important;
+  }
+  
+  .user-menu .username::after {
+    content: '';
+    width: 60px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    display: block;
+  }
+  
+  .scrolled .user-menu .username::after {
+    background: rgba(102, 126, 234, 0.2);
+  }
+  
+  .user-menu .auth-btn {
+    text-transform: uppercase;
   }
 }
 
@@ -450,6 +703,26 @@ onMounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  
+  /* 移动端进度条样式 */
+  .progress-border {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  
+  .progress-line {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 1px;
+    transition: width 0.3s ease;
   }
 }
 

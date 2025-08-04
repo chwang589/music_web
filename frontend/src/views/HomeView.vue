@@ -34,7 +34,7 @@
           class="cineslider-slide"
           :class="{ 'cineslider-slide-active': currentSlide === 1 }"
         >
-          <NewsSection />
+          <NewsSection ref="newsSectionRef" />
         </div>
       </div>
     </div>
@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { gsap } from 'gsap'
 import NavigationBar from '../components/NavigationBar.vue'
 import IntroductionSection from '../components/IntroductionSection.vue'
@@ -73,6 +73,7 @@ let isTransitioning = ref(false)
 const cinesliderContainer = ref<HTMLElement>()
 const shifter1 = ref<HTMLElement>()
 const shifter2 = ref<HTMLElement>()
+const newsSectionRef = ref<any>()
 
 const updateIntroProgress = (progress: number) => {
   // 只有在Introduction页面时才更新进度
@@ -103,52 +104,8 @@ const slideTo = (targetIndex: number, immediate = false) => {
     localStorage.setItem('hasVisitedNews', 'true')
   }
   
-  // 如果从其他页面回到Introduction页面，设置进度条为100%并强制设置文字状态
-  if (targetIndex === 0 && currentSlide.value !== 0) {
-    // 检查是否曾经访问过News页面
-    const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
-    if (hasVisitedNews) {
-      introProgress.value = 100
-      
-      // 强制设置StarWars文字到100%状态（显示最后一句话）
-      setTimeout(() => {
-        const starwarsWrapper = document.querySelector('.starwars-wrapper')
-        if (starwarsWrapper) {
-          const sentences = starwarsWrapper.querySelectorAll('p')
-          console.log('=== Forcing 100% text state ===')
-          console.log('Found sentences:', sentences.length)
-          
-          sentences.forEach((sentence, index) => {
-            const text = sentence.textContent?.trim()
-            console.log(`Sentence ${index}: ${text}`)
-            
-            if (index === sentences.length - 1) {
-              // 最后一句话显示在中心位置
-              console.log('Setting last sentence visible:', text)
-              Object.assign(sentence.style, {
-                transform: 'translateY(10%) scale(1)',
-                opacity: '1',
-                display: 'block'
-              })
-            } else {
-              // 其他句子隐藏或移到上方
-              Object.assign(sentence.style, {
-                transform: 'translateY(-50%) scale(1.5)',
-                opacity: '0',
-                display: 'block'
-              })
-            }
-          })
-          
-          // 隐藏介绍段落文字
-          const introParagraph = document.querySelector('.intro-paragraph')
-          if (introParagraph) {
-            introParagraph.style.opacity = '0'
-          }
-        }
-      }, 100)
-    }
-  }
+  // 从其他页面返回时，让进度条和文字界面自然保持一致
+  // 不再强制设置进度为100%
   
   const direction = targetIndex > currentSlide.value ? 'down' : 'up'
   const duration = immediate ? 0.1 : 1.8  // 延长换页时间
@@ -206,6 +163,12 @@ const slideTo = (targetIndex: number, immediate = false) => {
     setTimeout(() => {
       isTransitioning.value = false
       
+      // 如果切换到News页面，刷新新闻列表
+      if (targetIndex === 1 && newsSectionRef.value) {
+        console.log('Refreshing news list after slide transition')
+        newsSectionRef.value.fetchNews()
+      }
+      
       // 清理完成
     }, 100)
   })
@@ -233,9 +196,9 @@ const handleWheel = (event: WheelEvent) => {
     return
   }
 
-  // If we're in introduction slide, let IntroductionSection handle internal navigation
+  // If we're in introduction slide, don't handle wheel events here
+  // Let IntroductionSection handle all wheel events including page transitions
   if (currentSlide.value === 0) {
-    // Don't prevent default here - let IntroductionSection handle it
     return
   }
   
@@ -293,9 +256,48 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 }
 
+// Touch/Swipe navigation for mobile - 避免与IntroductionSection冲突
+const initTouchNavigation = () => {
+  if (!window.Hammer || !cinesliderContainer.value) return
+  
+  const hammer = new window.Hammer(cinesliderContainer.value)
+  hammer.get('swipe').set({ direction: window.Hammer.DIRECTION_VERTICAL })
+  
+  hammer.on('swipeup', (e) => {
+    // 如果在Introduction页面，不处理快速滑动，让IntroductionSection处理
+    if (currentSlide.value === 0) {
+      return
+    }
+    
+    if (!isTransitioning.value && currentSlide.value < totalSlides - 1) {
+      console.log('Touch swipe up detected, navigating to next slide')
+      nextSlide()
+    }
+  })
+  
+  hammer.on('swipedown', (e) => {
+    // 如果在Introduction页面，不处理快速滑动，让IntroductionSection处理
+    if (currentSlide.value === 0) {
+      return
+    }
+    
+    if (!isTransitioning.value && currentSlide.value > 0) {
+      console.log('Touch swipe down detected, navigating to previous slide')
+      prevSlide()
+    }
+  })
+  
+  console.log('Touch navigation initialized')
+}
+
 onMounted(() => {
   window.addEventListener('wheel', handleWheel, { passive: false })
   window.addEventListener('keydown', handleKeyDown)
+  
+  // Initialize touch navigation for mobile devices
+  nextTick(() => {
+    initTouchNavigation()
+  })
   
   // 开发用：按F12清除localStorage重置状态
   window.addEventListener('keydown', (e) => {
@@ -363,10 +365,52 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* Responsive */
+/* Mobile optimizations */
 @media (max-width: 768px) {
+  .cineslider-container {
+    /* Fix for mobile viewport height issues */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for modern browsers */
+  }
+  
   .cineslider-slide {
     height: 100vh;
+    height: 100dvh;
+    /* Prevent scroll bounce on iOS */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  .cineslider-wrapper {
+    /* Improve touch performance */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* Touch-friendly navigation hints */
+@media (max-width: 768px) and (pointer: coarse) {
+  .cineslider-slide {
+    /* Add visual hint for swipe navigation */
+    position: relative;
+  }
+  
+  .cineslider-slide::after {
+    content: '';
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    animation: swipeHint 2s infinite;
+  }
+  
+  @keyframes swipeHint {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
   }
 }
 </style>

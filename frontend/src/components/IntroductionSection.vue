@@ -186,8 +186,8 @@ class StarWarsScroll {
   
   setupSentences() {
     this.sentences.forEach((sentence, index) => {
-      // 调整初始位置，确保四行文字都在屏幕可见区域
-      const baseOffset = 10 // 从10%位置开始，给四行文字适当间距
+      // 参考桌面端，初始只显示前2-3行文字，后面的文字透明度为0
+      const baseOffset = 15 // 稍微向下一点开始
       
       // Paulo Coelho使用更小的间距，让它更接近第三行
       let distanceMultiplier
@@ -199,6 +199,7 @@ class StarWarsScroll {
       
       const y = baseOffset + distanceMultiplier
       const scale = 1 - this.options.offsetScale * index
+      // 恢复初始透明度：所有文字都有适当的可见度
       const alpha = Math.max(0, 1 - this.options.offsetAlpha * index)
       
       gsap.set(sentence, {
@@ -279,7 +280,7 @@ class StarWarsScroll {
       
       // 节流处理
       wheelTimeout = setTimeout(() => {
-        const delta = e.deltaY > 0 ? 0.01 : -0.01
+        const delta = e.deltaY > 0 ? 0.01 : -0.01 // 恢复网页端正常速度
         this.scrollProgress = Math.max(0, Math.min(1, this.scrollProgress + delta))
         this.timeline.progress(this.scrollProgress)
         
@@ -292,7 +293,7 @@ class StarWarsScroll {
         } else if (this.scrollProgress <= 0) {
           this.trigger('reverse')
         }
-      }, this.options.mousewheelThrottle)
+      }, this.options.mousewheelThrottle) // 恢复网页端正常节流时间
     }
     
     this.container.addEventListener('wheel', handleWheel, { passive: false })
@@ -301,7 +302,7 @@ class StarWarsScroll {
     this.container._wheelHandler = handleWheel
   }
   
-  // 触摸手势支持
+  // 触摸手势支持 - 修复移动端导航问题
   initTouch() {
     if (!window.Hammer) return
     
@@ -317,33 +318,24 @@ class StarWarsScroll {
     hammer.on('panmove', (e) => {
       if (this.isLocked) return
       
-      const delta = e.deltaY / window.innerHeight
+      // 修正滑动方向：向上滑动（deltaY为负值）文字向下滚动（减少progress）
+      // 向下滑动（deltaY为正值）文字向上滚动（增加progress）
+      const delta = -e.deltaY / (window.innerHeight * 4) // 调整灵敏度，优化手感
       this.scrollProgress = Math.max(0, Math.min(1, startProgress + delta))
       this.timeline.progress(this.scrollProgress)
       this.trigger('progress', this.scrollProgress)
     })
     
     hammer.on('panend', (e) => {
-      // 根据滑动速度决定是否自动完成滚动
-      if (Math.abs(e.velocityY) > 0.3) {
-        const targetProgress = e.velocityY > 0 ? 1 : 0
-        gsap.to(this, {
-          duration: 0.5,
-          scrollProgress: targetProgress,
-          ease: 'power2.out',
-          onUpdate: () => {
-            this.timeline.progress(this.scrollProgress)
-            this.trigger('progress', this.scrollProgress)
-          },
-          onComplete: () => {
-            if (this.scrollProgress >= 1) {
-              this.trigger('complete')
-            } else if (this.scrollProgress <= 0) {
-              this.trigger('reverse')
-            }
-          }
-        })
+      // 简化触摸结束逻辑，只处理页面切换，不做额外的惯性动画
+      if (this.scrollProgress >= 0.95 && e.velocityY > 0.5) {
+        // 滚动已经接近完成，且向下滑动速度足够快，触发页面切换
+        this.trigger('complete')
+      } else if (this.scrollProgress <= 0.05 && e.velocityY < -0.5) {
+        // 滚动在开始位置，且向上滑动速度足够快
+        this.trigger('reverse')
       }
+      // 其他情况不做任何额外动画，避免粘连感
     })
     
     this.hammerManager = hammer
@@ -406,25 +398,76 @@ const handleWheel = (event: WheelEvent) => {
     // 立即触发页面切换，让导航栏先响应
     scrollToNext()
   }
+  // 对于其他滚动，让StarWars类处理（不阻止默认行为）
 }
 
 const initVideoBackground = () => {
   if (!videoBackground.value) return
   
-  // 确保视频静音自动播放
+  // 移动端检测和优化
+  const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  
+  if (isMobile) {
+    // 移动端使用静态背景图片替代视频
+    console.log('Mobile device detected, using static background instead of video')
+    const videoContainer = videoBackground.value.parentElement
+    if (videoContainer) {
+      // 使用1.png作为移动端背景图片
+      videoContainer.style.background = `url('/1.png')`
+      videoContainer.style.backgroundSize = 'cover' // 覆盖整个容器
+      videoContainer.style.backgroundPosition = 'center center' // 居中显示
+      videoContainer.style.backgroundRepeat = 'no-repeat' // 不重复
+      videoContainer.style.backgroundAttachment = 'fixed' // 固定背景，增强视觉效果
+      
+      // 添加轻微的叠加效果以确保文字可读性
+      const overlay = document.createElement('div')
+      overlay.style.position = 'absolute'
+      overlay.style.top = '0'
+      overlay.style.left = '0'
+      overlay.style.width = '100%'
+      overlay.style.height = '100%'
+      overlay.style.background = 'rgba(26, 40, 68, 0.2)' // 轻微的蓝色叠加
+      overlay.style.pointerEvents = 'none' // 不阻挡交互
+      videoContainer.appendChild(overlay)
+      
+      // 隐藏视频元素
+      videoBackground.value.style.display = 'none'
+    }
+    return
+  }
+  
+  // 桌面端正常播放视频
   videoBackground.value.muted = true
   videoBackground.value.playsInline = true
   
   // 处理视频加载和播放
   videoBackground.value.addEventListener('loadeddata', () => {
     videoBackground.value?.play().catch((error) => {
-      console.warn('Video autoplay failed:', error)
+      console.warn('Video autoplay failed, fallback to static background:', error)
+      // 视频播放失败时降级为静态背景
+      const videoContainer = videoBackground.value?.parentElement
+      if (videoContainer) {
+        videoContainer.style.background = `url('/1.png')`
+        videoContainer.style.backgroundSize = 'cover'
+        videoContainer.style.backgroundPosition = 'center center'
+        videoContainer.style.backgroundRepeat = 'no-repeat'
+        videoBackground.value!.style.display = 'none'
+      }
     })
   })
   
   // 处理视频错误
   videoBackground.value.addEventListener('error', (error) => {
-    console.warn('Video failed to load:', error)
+    console.warn('Video failed to load, using fallback background:', error)
+    // 视频加载失败时降级为静态背景
+    const videoContainer = videoBackground.value?.parentElement
+    if (videoContainer) {
+      videoContainer.style.background = `url('/1.png')`
+      videoContainer.style.backgroundSize = 'cover'
+      videoContainer.style.backgroundPosition = 'center center'
+      videoContainer.style.backgroundRepeat = 'no-repeat'
+      videoBackground.value!.style.display = 'none'
+    }
   })
 }
 
@@ -434,9 +477,9 @@ const initStarWarsScroll = () => {
   // 初始化StarWars滚动 - 保留原版交互但不切换页面
   starwarsScroll = new StarWarsScroll(starwarsContainer.value, {
     debug: false,
-    offsetSentenceDistance: 60, // 缩小整体行间距
-    offsetScale: 0.25, // 恢复原版缩放
-    offsetAlpha: 0.2, // 适当调整透明度，让Paulo Coelho可见
+    offsetSentenceDistance: 60, // 恢复原来的行间距
+    offsetScale: 0.25, // 恢复原来的缩放效果
+    offsetAlpha: 0.2, // 恢复原来的透明度设置
     stagger: 0.5,
     duration: 1,
     mousewheelThrottle: 10,
@@ -446,38 +489,13 @@ const initStarWarsScroll = () => {
         starwarsContainer.value.style.opacity = '1'
       }
       
-      // 检查是否是第一次访问
-      const hasVisitedNews = localStorage.getItem('hasVisitedNews') === 'true'
-      console.log('=== StarWars Init Debug ===')
-      console.log('hasVisitedNews from localStorage:', hasVisitedNews)
-      
-      // 设置初始化标志，防止onProgress覆盖
-      this.isInitializing = true
-      
-      // 简化初始化逻辑，只设置进度，文字状态由HomeView处理
-      if (!hasVisitedNews) {
-        // 第一次访问，从0%开始
-        console.log('First visit - setting to 0%')
-        this.scrollProgress = 0
-        updateProgress(0)
-      } else {
-        // 从其他页面返回，设置为100%（文字状态由HomeView处理）
-        console.log('Return visit - setting progress to 100%')
-        this.scrollProgress = 1.0
-        updateProgress(100)
-        
-        // 隐藏介绍文字
-        if (introParagraph.value) {
-          gsap.set(introParagraph.value, { opacity: 0 })
-        }
+      // 简化逻辑：始终从0%开始，让进度条和文字界面自然保持一致
+      console.log('StarWars initialized - starting from 0%')
+      this.scrollProgress = 0
+      updateProgress(0)
+      if (this.timeline) {
+        this.timeline.progress(0)
       }
-      
-      // 短暂延迟后允许onProgress正常工作
-      const self = this
-      setTimeout(() => {
-        self.isInitializing = false
-        console.log('StarWars initialization completed')
-      }, 100)
     },
     onProgress: function(progress: number) {
       // 避免在初始化时覆盖手动设置的进度
@@ -517,6 +535,7 @@ const initStarWarsScroll = () => {
     },
     onComplete: function() {
       // 动画完成后立即切换到下一页
+      console.log('StarWars animation completed, switching to next slide')
       scrollToNext()
     },
     onStart: function() {
@@ -579,16 +598,19 @@ onMounted(() => {
     }
   })
 
-  // Add wheel event listener for page navigation
+  // 添加页面切换的wheel事件监听器
+  // 这个监听器专门处理从StarWars滚动到News页面的切换
   window.addEventListener('wheel', handleWheel, { passive: false })
 })
 
 onUnmounted(() => {
-  window.removeEventListener('wheel', handleWheel)
-  document.removeEventListener('wheel', handleWheel)
+  // 清理StarWars滚动实例
   if (starwarsScroll) {
     starwarsScroll.destroy()
   }
+  
+  // 清理wheel事件监听器
+  window.removeEventListener('wheel', handleWheel)
 })
 </script>
 
@@ -599,7 +621,7 @@ onUnmounted(() => {
   height: 100vh;
   overflow: hidden;
   font-family: 'Ubuntu', sans-serif;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: linear-gradient(135deg, #1a2844 0%, #2d3b5f 100%);
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
@@ -675,7 +697,7 @@ onUnmounted(() => {
 /* 左上角品牌Logo */
 .brand-logo {
   position: absolute;
-  top: 30px;
+  top: 20px;
   left: 30px;
   z-index: 50;
   opacity: 0.9;
@@ -704,7 +726,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: linear-gradient(135deg, #1a2844 0%, #2d3b5f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -726,7 +748,7 @@ onUnmounted(() => {
 .loader-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -820,8 +842,8 @@ onUnmounted(() => {
 .starwars-container {
   position: absolute;
   top: 30%; /* 向上移动容器 */
-  left: 0;
-  width: 100%;
+  left: 5%;
+  width: 90%;
   height: 200%;
   overflow: hidden;
   z-index: 15;
@@ -845,14 +867,15 @@ onUnmounted(() => {
 .starwars-wrapper p {
   position: absolute;
   left: 50%;
-  font-size: 62px; /* 进一步增大字体 */
+  font-size: 62px; /* 恢复桌面端原始字体大小 */
   text-align: center;
-  white-space: nowrap;
+  white-space: normal; /* 允许换行 */
   font-weight: 400;
   font-style: italic;
-  letter-spacing: 2px;
-  width: 1400px; /* 增大宽度适应更大的字体 */
-  margin-left: -700px;
+  letter-spacing: 2px; /* 桌面端字母间距 */
+  line-height: 1.4; /* 桌面端行间距 */
+  width: 80%; /* 限制宽度让长文字换行 */
+  margin-left: -40%; /* 居中偏移 */
   transform-origin: center center;
   color: #fff;
   opacity: 1;
@@ -862,6 +885,9 @@ onUnmounted(() => {
   /* 简化文字效果 */
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
   font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+  line-height: 1.2; /* 调整行高适应换行 */
+  word-wrap: break-word; /* 强制长单词换行 */
+  hyphens: auto; /* 启用连字符换行 */
 }
 
 .starwars-wrapper p strong {
@@ -884,12 +910,12 @@ onUnmounted(() => {
     0 0 25px rgba(255, 255, 255, 0.6),
     0 0 50px rgba(255, 255, 255, 0.4);
   letter-spacing: 5px; /* 适当调整字母间距 */
-  white-space: nowrap;
-  width: 1400px; /* 增大宽度适应更大的字体 */
-  margin-left: -700px;
+  white-space: nowrap; /* Paulo Coelho保持不换行 */
+  width: 90%; /* 稍微限制宽度 */
+  left: 50%;
+  margin-left: -45%; /* 居中偏移 */
   text-align: center;
   position: absolute;
-  left: 50%;
   transform-origin: center center;
   will-change: transform, opacity, scale;
   backface-visibility: hidden;
@@ -901,7 +927,7 @@ onUnmounted(() => {
 /* Scroll Down 按钮 - 与鼠标重合在中心位置 */
 .scroll-down {
   position: absolute;
-  bottom: 30px;
+  bottom: 120px;
   left: 50%;
   transform: translateX(-50%);
   color: #fff;
@@ -918,12 +944,36 @@ onUnmounted(() => {
 }
 
 .scroll-down:hover {
-  opacity: 0; /* 点击时文字消失 */
+  opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
 
+.scroll-down:hover span {
+  opacity: 0; /* hover时文字消失 */
+}
+
+.scroll-down:hover .icon {
+  border-color: rgba(255, 255, 255, 1); /* hover时鼠标图标变白 */
+}
+
+.scroll-down:hover .icon::before {
+  background: rgba(255, 255, 255, 1); /* hover时滚动点变白 */
+}
+
 .scroll-down:active {
-  opacity: 0; /* 点击时完全透明 */
+  opacity: 1;
+}
+
+.scroll-down:active span {
+  opacity: 0; /* 点击时文字消失 */
+}
+
+.scroll-down:active .icon {
+  border-color: rgba(255, 255, 255, 1); /* 点击时鼠标图标变白 */
+}
+
+.scroll-down:active .icon::before {
+  background: rgba(255, 255, 255, 1); /* 点击时滚动点变白 */
 }
 
 .scroll-down .icon {
@@ -935,6 +985,7 @@ onUnmounted(() => {
   border-radius: 12px;
   position: relative;
   background: transparent;
+  transition: border-color 0.3s ease; /* 添加边框颜色动画 */
 }
 
 /* FeedMusic精确复制的鼠标滚轮指示器 */
@@ -949,13 +1000,15 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.6);
   border-radius: 1px;
   animation: scroll-indicator 2s ease-in-out infinite;
+  transition: background 0.3s ease; /* 添加滚动点颜色动画 */
 }
 
 .scroll-down span {
   display: block;
-  text-transform: lowercase;
+  text-transform: uppercase; /* 保持大写 */
   letter-spacing: 1px;
   font-weight: 300;
+  transition: opacity 0.3s ease; /* 添加文字淡入淡出动画 */
 }
 
 /* 滚轮指示器动画 */
@@ -986,26 +1039,58 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  /* 移动端隐藏介绍文字 */
   .intro-paragraph {
-    left: 20px;
-    right: 20px;
-    max-width: none;
-    top: 100px;
+    display: none;
   }
   
   .starwars-wrapper p {
-    font-size: 18px;
-    width: 90%;
-    margin-left: -45%;
-    white-space: normal;
-    max-width: 300px;
+    font-size: 28px; /* 移动端更小字体 */
+    width: 90%; /* 限制宽度让文字换行 */
+    left: 50%; /* 居中定位 */
+    margin-left: -45%; /* 居中偏移 */
+    white-space: normal; /* 允许换行 */
+    text-align: center; /* 确保文本居中 */
+    padding: 0 15px; /* 内边距 */
+    box-sizing: border-box;
+    line-height: 1.6; /* 增加行高 */
+    letter-spacing: 2px; /* 增加字母间距 */
+    transform-origin: center center;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .starwars-wrapper p.author-signature {
+    font-size: 38px; /* Paulo Coelho移动端字体 */
+    width: 95%; /* 稍微宽一点 */
+    left: 50%;
+    margin-left: -47.5%;
+    text-align: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    transform-origin: center center;
+    white-space: nowrap; /* 保持不换行 */
   }
 }
 
 @media (max-width: 480px) {
   .starwars-wrapper p {
-    font-size: 16px;
-    max-width: 250px;
+    font-size: 26px; /* 小屏幕字体 */
+    width: 95%; /* 限制宽度 */
+    left: 50%;
+    margin-left: -47.5%;
+    text-align: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    line-height: 1.4; /* 增加行高 */
+  }
+  
+  .starwars-wrapper p.author-signature {
+    font-size: 30px; /* Paulo Coelho小屏幕 */
+    width: 98%;
+    left: 50%;
+    margin-left: -49%;
+    white-space: nowrap;
   }
   
   .intro-paragraph p {

@@ -209,7 +209,7 @@ const props = defineProps<{
   isOpen: boolean
 }>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'newsCreated'])
 
 const authStore = useAuthStore()
 const activeTab = ref('create')
@@ -285,7 +285,7 @@ const handleCreateNews = async () => {
   createSuccess.value = ''
   
   try {
-    await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/news/`, {
+    await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news/`, {
       title: newNews.title,
       description: newNews.description,
       image_url: newNews.image_url || null
@@ -298,10 +298,11 @@ const handleCreateNews = async () => {
     newNews.description = ''
     newNews.image_url = ''
     
-    // Refresh news list if on manage tab
-    if (activeTab.value === 'manage') {
-      fetchUserNews()
-    }
+    // Always refresh news list after creating
+    await fetchUserNews()
+    
+    // Also emit event to refresh main news list
+    emit('newsCreated')
     
   } catch (error: any) {
     createError.value = error.response?.data?.detail || 'Failed to create news'
@@ -316,7 +317,7 @@ const fetchUserNews = async () => {
   loadingNews.value = true
   
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/news/`)
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news/`)
     userNews.value = response.data.filter((news: NewsItem) => 
       news.creator === authStore.username
     )
@@ -339,7 +340,7 @@ const handleEditNews = async () => {
   if (!editingNews.value) return
   
   try {
-    await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/news/${editingNews.value.id}`, {
+    await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news/${editingNews.value.id}`, {
       title: editingNews.value.title,
       description: editingNews.value.description,
       image_url: editingNews.value.image_url || null
@@ -356,7 +357,7 @@ const deleteNews = async (newsId: number) => {
   if (!confirm('Are you sure you want to delete this news?')) return
   
   try {
-    await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/news/${newsId}`)
+    await axios.delete(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news/${newsId}`)
     fetchUserNews()
   } catch (error: any) {
     console.error('Failed to delete news:', error)
@@ -433,7 +434,7 @@ watch(() => props.isOpen, (newValue) => {
   align-items: center;
   padding: 20px 25px;
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
 }
 
@@ -551,7 +552,7 @@ watch(() => props.isOpen, (newValue) => {
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border: none;
   padding: 12px 25px;

@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
 interface NewsItem {
@@ -107,15 +107,33 @@ const fetchNews = async () => {
   }
 }
 
+// Expose fetchNews for parent component to refresh
+defineExpose({
+  fetchNews
+})
+
+// Handle page visibility change to refresh news when returning to the page
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    console.log('Page became visible, refreshing news list')
+    fetchNews()
+  }
+}
+
 onMounted(() => {
   fetchNews()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
 <style scoped>
 .news-section {
   height: 100vh;
-  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+  background: linear-gradient(180deg, #3a4d7a 0%, #4a5d8a 100%);
   position: relative;
   overflow: hidden;
 }
@@ -176,7 +194,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 80px;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #7896dc, #8aa6ee);
   border-radius: 2px;
 }
 
@@ -196,6 +214,64 @@ onMounted(() => {
 }
 
 /* 平板端2列布局 */
+/* Mobile responsive design */
+@media (max-width: 767px) {
+  .container {
+    padding: 60px 15px;
+    /* Improve touch scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+  
+  .news-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .news-card {
+    max-width: none;
+    /* Better touch target */
+    min-height: 44px;
+    /* Improve tap performance */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    /* Add touch feedback */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .news-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .news-title {
+    font-size: 1.1rem;
+    /* Better readability on mobile */
+    line-height: 1.4;
+  }
+  
+  .news-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  
+  .load-more-btn {
+    padding: 12px 30px;
+    /* Better touch target */
+    min-height: 44px;
+    /* Touch feedback */
+    transition: all 0.2s ease;
+  }
+  
+  .load-more-btn:active {
+    transform: scale(0.96);
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1199px) {
   .news-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -275,7 +351,7 @@ onMounted(() => {
 }
 
 .load-more-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border: none;
   padding: 12px 30px;

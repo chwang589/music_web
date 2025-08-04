@@ -473,7 +473,7 @@ const fetchUserNews = async () => {
   loadingUserNews.value = true
   
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news/`)
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://47.97.154.187:9007'}/api/news?limit=100`)
     userNews.value = response.data.filter((news: NewsItem) => 
       news.creator === authStore.username
     )
@@ -721,7 +721,7 @@ onMounted(() => {
   align-items: center;
   padding: 20px 25px;
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
 }
 
@@ -840,7 +840,7 @@ onMounted(() => {
 .avatar {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -981,7 +981,7 @@ onMounted(() => {
 }
 
 .create-first-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border: none;
   padding: 12px 25px;
@@ -1053,7 +1053,7 @@ onMounted(() => {
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border: none;
   padding: 12px 25px;

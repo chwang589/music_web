@@ -8,6 +8,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+# 将1.png复制到public目录以便访问
+RUN cp 1.png public/
 RUN npm run build-only
 
 FROM nginx:alpine as production-stage
