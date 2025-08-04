@@ -1,5 +1,5 @@
 <template>
-  <nav class="navigation-bar" :class="{ scrolled: isScrolled }">
+  <nav class="navigation-bar" :class="{ scrolled: isScrolled, invert: invertColors }">
     <div class="nav-container">
       <div class="nav-brand">
         <h2>NeuraFlow</h2>
@@ -9,19 +9,16 @@
         <div class="nav-item" :class="{ active: currentSection === 'introduction' }">
           <button @click="scrollToSection('introduction')" class="nav-button">
             Introduction
+            <div class="progress-border" v-if="showIntroProgress">
+              <div class="progress-line" :style="{ width: introProgress + '%' }"></div>
+            </div>
           </button>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: (introProgress || 0) + '%' }"></div>
-          </div>
         </div>
         
         <div class="nav-item" :class="{ active: currentSection === 'news' }">
           <button @click="scrollToSection('news')" class="nav-button">
             News
           </button>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: newsProgress + '%' }"></div>
-          </div>
         </div>
       </div>
       
@@ -50,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -64,24 +61,35 @@ const emit = defineEmits(['openLogin', 'openRegister', 'navigateToSlide'])
 const router = useRouter()
 const authStore = useAuthStore()
 const isScrolled = ref(false)
-// News progress should be 100% when user is on news page or has visited it
-const newsProgress = computed(() => {
-  // If currently on news page, show 100%
-  if (props.currentSlide === 1) return 100
-  // If still on introduction but completed it (progress is 100%), show 100% for news too
-  if (props.currentSlide === 0 && (props.introProgress || 0) >= 100) return 100
-  return 0
+const invertColors = ref(false)
+
+// 显示进度条的条件 - 只有在Introduction页面且进度大于0时显示
+const showIntroProgress = computed(() => {
+  return props.currentSlide === 0 && (props.introProgress || 0) > 0
 })
 
-// Determine current section based on slide index
+// 确定当前section
 const currentSection = computed(() => {
   if (props.currentSlide === 0) return 'introduction'
   if (props.currentSlide === 1) return 'news'
   return 'introduction'
 })
 
+// 监听currentSlide变化，实现导航栏样式切换
+watch(() => props.currentSlide, (newSlide) => {
+  // Introduction页面使用透明导航栏
+  if (newSlide === 0) {
+    isScrolled.value = false
+    invertColors.value = false
+  } 
+  // News页面使用实心导航栏
+  else if (newSlide === 1) {
+    isScrolled.value = true
+    invertColors.value = false
+  }
+}, { immediate: true })
+
 const scrollToSection = (section: string) => {
-  // Use slide navigation instead of scrollIntoView
   if (section === 'introduction') {
     emit('navigateToSlide', 0)
   } else if (section === 'news') {
@@ -97,22 +105,18 @@ const logout = () => {
   authStore.logout()
 }
 
-const handleScroll = () => {
-  // For slide system, we don't use scroll position to determine section
-  // Instead, we use the currentSlide prop
-}
-
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-  handleScroll()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
+  // 初始化导航栏状态
+  if (props.currentSlide === 0) {
+    isScrolled.value = false
+  } else {
+    isScrolled.value = true
+  }
 })
 </script>
 
 <style scoped>
+/* 基础导航栏样式 - 模仿FeedMusic原版 */
 .navigation-bar {
   position: fixed;
   top: 0;
@@ -122,7 +126,8 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+  height: 70px;
 }
 
 .navigation-bar.scrolled {
@@ -131,11 +136,22 @@ onUnmounted(() => {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* 颜色反转状态 - FeedMusic Tech Spotlight页面效果 */
+.navigation-bar.invert {
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.navigation-bar.invert.scrolled {
+  background: rgba(0, 0, 0, 0.95);
+  box-shadow: 0 2px 20px rgba(255, 255, 255, 0.1);
+}
+
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  height: 70px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -145,7 +161,7 @@ onUnmounted(() => {
   color: white;
   margin: 0;
   font-weight: 700;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
   background: linear-gradient(135deg, #00d4ff, #667eea);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -159,6 +175,13 @@ onUnmounted(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+}
+
+.invert .nav-brand h2 {
+  background: linear-gradient(135deg, #fff, #ccc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .nav-sections {
@@ -184,18 +207,31 @@ onUnmounted(() => {
   border-radius: 20px;
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
 
 .scrolled .nav-button {
   color: #2c3e50;
 }
 
+.invert .nav-button {
+  color: #000;
+}
+
 .nav-button:hover {
   background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .scrolled .nav-button:hover {
   background: rgba(102, 126, 234, 0.1);
+}
+
+.invert .nav-button:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .nav-item.active .nav-button {
@@ -207,28 +243,45 @@ onUnmounted(() => {
   color: #667eea;
 }
 
-.progress-bar {
+.invert .nav-item.active .nav-button {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+}
+
+/* FeedMusic原版进度条样式 */
+.progress-border {
   width: 60px;
   height: 3px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
-  margin-top: 5px;
   overflow: hidden;
+  position: relative;
 }
 
-.scrolled .progress-bar {
+.scrolled .progress-border {
   background: rgba(102, 126, 234, 0.2);
 }
 
-.progress-fill {
+.invert .progress-border {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.progress-line {
   height: 100%;
   background: white;
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.1s ease-out;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
-.scrolled .progress-fill {
+.scrolled .progress-line {
   background: #667eea;
+}
+
+.invert .progress-line {
+  background: #000;
 }
 
 .nav-auth {
@@ -269,8 +322,15 @@ onUnmounted(() => {
   border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
+.invert .login-btn {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
 .login-btn:hover {
   background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .register-btn:hover {
@@ -287,10 +347,15 @@ onUnmounted(() => {
 .username {
   color: white;
   font-weight: 600;
+  transition: color 0.3s ease;
 }
 
 .scrolled .username {
   color: #2c3e50;
+}
+
+.invert .username {
+  color: #000;
 }
 
 .user-center-btn {
@@ -310,18 +375,26 @@ onUnmounted(() => {
   border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
+.invert .logout-btn {
+  background: rgba(0, 0, 0, 0.2);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
 .user-center-btn:hover {
   background: #45a049;
+  transform: translateY(-1px);
 }
 
 .logout-btn:hover {
   background: rgba(220, 53, 69, 0.2);
+  transform: translateY(-1px);
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
   .nav-container {
     padding: 0 15px;
-    height: 60px;
   }
   
   .nav-sections {
@@ -333,7 +406,7 @@ onUnmounted(() => {
     padding: 6px 12px;
   }
   
-  .progress-bar {
+  .progress-border {
     width: 40px;
   }
   
@@ -348,9 +421,12 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+  .navigation-bar {
+    height: 60px;
+  }
+
   .nav-container {
     padding: 0 10px;
-    height: 55px;
   }
 
   .nav-brand h2 {
@@ -358,7 +434,7 @@ onUnmounted(() => {
   }
   
   .nav-sections {
-    gap: 0.3rem;
+    gap: 0.5rem;
   }
 
   .nav-button {
@@ -366,7 +442,7 @@ onUnmounted(() => {
     padding: 4px 8px;
   }
 
-  .progress-bar {
+  .progress-border {
     width: 30px;
     height: 2px;
   }
@@ -382,7 +458,7 @@ onUnmounted(() => {
   }
   
   .user-menu {
-    gap: 0.3rem;
+    gap: 0.5rem;
     font-size: 0.7rem;
   }
 
@@ -419,7 +495,7 @@ onUnmounted(() => {
     order: 2;
   }
 
-  .progress-bar {
+  .progress-border {
     display: none;
   }
 }

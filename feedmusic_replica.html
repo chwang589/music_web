@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraFlow - FeedMusic Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        /* Cineslider 页面切换系统 */
+        .cineslider-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .cineslider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cineslider-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: translate3d(0, 0, 0);
+        }
+
+        .cineslider-slide-active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 背景过渡 */
+        .cineslider-shifter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            transition: background-color 1.2s ease-in-out;
+        }
+
+        /* 导航系统 */
+        .navigation {
+            position: fixed;
+            top: 50%;
+            right: 50px;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .navigation ul {
+            list-style: none;
+        }
+
+        .navigation li {
+            margin: 20px 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform-origin: right center;
+        }
+
+        .navigation a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            position: relative;
+            display: block;
+            text-align: right;
+            padding-right: 20px;
+        }
+
+        .navigation a.active {
+            opacity: 1;
+        }
+
+        .navigation a:hover {
+            opacity: 1;
+        }
+
+        /* 进度条 */
+        .progress-border {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-line {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+
+        /* Introduction 页面 */
+        #homepage-introduction {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 装饰边框 */
+        .border {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        .border[data-position="top"] {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        .border[data-position="right"] {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+        }
+
+        .border[data-position="bottom"] {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        .border[data-position="left"] {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 1px;
+        }
+
+        /* 介绍段落 */
+        .intro-paragraph {
+            position: absolute;
+            top: 100px;
+            left: 50px;
+            max-width: 500px;
+            z-index: 20;
+        }
+
+        .intro-paragraph p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        /* 视频背景 */
+        .videobg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .videobg-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.3;
+        }
+
+        .videobg-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 星球大战滚动文字 */
+        .starwars-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 70%;
+            overflow: hidden;
+            z-index: 15;
+            perspective: 1000px;
+        }
+
+        .starwars-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .starwars-wrapper p {
+            position: absolute;
+            left: 50%;
+            transform-origin: center center;
+            font-size: 24px;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: normal;
+            letter-spacing: 1px;
+            transition: transform 0.1s linear, opacity 0.1s linear;
+            transform-style: preserve-3d;
+            width: 800px;
+            margin-left: -400px;
+        }
+
+        .starwars-wrapper p strong {
+            color: #ffd700;
+        }
+
+        /* Technology 页面 */
+        #homepage-technology {
+            background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Scroll Down 按钮 */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .scroll-down:hover {
+            opacity: 1;
+        }
+
+        .scroll-down .icon {
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin: 0 auto 10px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .scroll-down .icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 6px;
+            height: 6px;
+            border-right: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+        }
+
+        .scroll-down span {
+            display: block;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navigation {
+                right: 20px;
+            }
+            
+            .intro-paragraph {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+            
+            .starwars-wrapper p {
+                font-size: 18px;
+                width: 90%;
+                margin-left: -45%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面容器 -->
+    <div class="cineslider-container">
+        <!-- 背景过渡层 -->
+        <div class="cineslider-shifter" id="bg-shifter"></div>
+        
+        <!-- 导航菜单 -->
+        <div class="navigation">
+            <ul>
+                <li>
+                    <a href="#" data-slide="homepage-introduction" class="active">
+                        Introduction
+                        <div class="progress-border">
+                            <div class="progress-line" id="intro-progress"></div>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-slide="homepage-technology">
+                        The Technology
+                        <div class="progress-border">
+                            <div class="progress-line" id="tech-progress"></div>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-slide="homepage-news">
+                        AI News
+                        <div class="progress-border">
+                            <div class="progress-line" id="news-progress"></div>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 页面包装器 -->
+        <div class="cineslider-wrapper">
+            <!-- Introduction 页面 -->
+            <div id="homepage-introduction" class="cineslider-slide cineslider-slide-active">
+                <!-- 装饰边框 -->
+                <div class="border" data-position="top"></div>
+                <div class="border" data-position="right"></div>
+                <div class="border" data-position="left"></div>
+                <div class="border" data-position="bottom"></div>
+
+                <!-- 介绍段落 -->
+                <div class="intro-paragraph">
+                    <p>NeuraFlow is an intelligent AI news aggregation platform, using cutting-edge technology to deliver personalized content experiences.</p>
+                    <p>NeuraFlow facilitates <b>trusted</b> exchanges of curated AI insights with researchers, developers, and enthusiasts in a seamless, intelligent manner.</p>
+                </div>
+
+                <!-- 视频背景 -->
+                <div class="videobg-container">
+                    <video autoplay muted loop>
+                        <source src="https://www.feedmusic.com/videos/intro.mp4" type="video/mp4">
+                    </video>
+                    <div class="videobg-shadow"></div>
+                </div>
+
+                <!-- 星球大战滚动文字 -->
+                <div class="starwars-container">
+                    <div class="starwars-wrapper" id="starwars-wrapper">
+                        <p>When you want knowledge,</p>
+                        <p>all the digital universe conspires</p>
+                        <p>in helping you to discover it.</p>
+                        <p><strong><i><small>NeuraFlow Vision</small></i></strong></p>
+                        <p><br><br></p>
+                        <p><br><br></p>
+                        <p>AI is that conspiracy:</p>
+                        <p>the conspiracy of intelligence.</p>
+                        <p><br><br></p>
+                        <p><br><br></p>
+                        <p>Intelligence is the single</p>
+                        <p>most important ingredient</p>
+                        <p>missing from information overload.</p>
+                        <p><br><br></p>
+                        <p><br><br></p>
+                        <p>McKinsey and OpenAI</p>
+                        <p>forecast the AI economy</p>
+                        <p>to be worth between</p>
+                        <p><strong>4.4 and 15.7 trillion dollars</strong></p>
+                        <p><strong>by 2030.</strong></p>
+                        <p><br><br></p>
+                        <p><br><br></p>
+                        <p>The difference</p>
+                        <p>between those numbers</p>
+                        <p>is <strong>intelligent access</strong>.</p>
+                        <p><br><br></p>
+                        <p><br><br></p>
+                        <p>NeuraFlow is a digital mechanism of <strong>intelligence</strong></p>
+                    </div>
+                </div>
+
+                <!-- Scroll Down 按钮 -->
+                <a href="#" class="scroll-down" id="scroll-down-btn">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- Technology 页面 -->
+            <div id="homepage-technology" class="cineslider-slide">
+                <div class="intro-paragraph">
+                    <h2>AI-Powered Technology</h2>
+                    <p>Our platform uses advanced machine learning algorithms to curate and personalize AI news content for every user.</p>
+                    <p>Experience the future of <b>intelligent</b> content discovery.</p>
+                </div>
+                
+                <a href="#" class="scroll-down">
+                    <i class="icon"></i>
+                    <span>scroll down</span>
+                </a>
+            </div>
+
+            <!-- News 页面 -->
+            <div id="homepage-news" class="cineslider-slide">
+                <div class="intro-paragraph">
+                    <h2>Latest AI News</h2>
+                    <p>Stay updated with the latest developments in artificial intelligence, machine learning, and emerging technologies.</p>
+                    <p>Your personalized AI news feed awaits.</p>
+                </div>
+                
+                <a href="#" class="scroll-down">
+                    <i class="icon"></i>
+                    <span>explore news</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let currentSlideIndex = 0;
+        let isTransitioning = false;
+        let scrollProgress = 0;
+        let animationId = null;
+
+        const slides = ['homepage-introduction', 'homepage-technology', 'homepage-news'];
+        const bgColors = ['#1a1a1a', '#2d1b69', '#11998e'];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeStarWars();
+            bindEvents();
+            updateNavigation();
+            startScrollAnimation();
+        });
+
+        // 星球大战文字初始化
+        function initializeStarWars() {
+            const wrapper = document.getElementById('starwars-wrapper');
+            const paragraphs = wrapper.querySelectorAll('p');
+            
+            paragraphs.forEach((p, index) => {
+                const baseY = index * 100; // 100%, 200%, 300%...
+                const opacity = Math.max(-6, 1 - index * 0.25);
+                const scale = Math.max(0.1, 1 - index * 0.1);
+                
+                p.style.transform = `translate(-50%, ${baseY}%) scale(${scale})`;
+                p.style.opacity = opacity;
+            });
+        }
+
+        // 更新星球大战滚动效果
+        function updateStarWarsScroll(progress) {
+            const wrapper = document.getElementById('starwars-wrapper');
+            const paragraphs = wrapper.querySelectorAll('p');
+            
+            paragraphs.forEach((p, index) => {
+                const baseY = index * 100;
+                const scrollOffset = progress * 300; // 滚动影响因子
+                const finalY = baseY - scrollOffset;
+                
+                // 计算透明度 (距离越远越透明)
+                const opacity = Math.max(-6, 1 - (finalY / 200));
+                
+                // 计算缩放比例 (距离越远越小)
+                const scale = Math.max(0.1, 1 - (finalY / 1000));
+                
+                p.style.transform = `translate(-50%, ${finalY}%) scale(${scale})`;
+                p.style.opacity = opacity;
+            });
+        }
+
+        // 页面切换
+        function switchSlide(targetIndex, direction = 'next') {
+            if (isTransitioning || targetIndex === currentSlideIndex) return;
+            
+            isTransitioning = true;
+            
+            const currentSlide = document.getElementById(slides[currentSlideIndex]);
+            const targetSlide = document.getElementById(slides[targetIndex]);
+            const bgShifter = document.getElementById('bg-shifter');
+            
+            // 更新背景颜色
+            bgShifter.style.backgroundColor = bgColors[targetIndex];
+            
+            // 淡出当前页面
+            currentSlide.classList.remove('cineslider-slide-active');
+            
+            // 延迟淡入目标页面
+            setTimeout(() => {
+                targetSlide.classList.add('cineslider-slide-active');
+                currentSlideIndex = targetIndex;
+                updateNavigation();
+                
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 800);
+            }, 100);
+        }
+
+        // 更新导航
+        function updateNavigation() {
+            const navItems = document.querySelectorAll('.navigation a');
+            
+            navItems.forEach((item, index) => {
+                const li = item.parentElement;
+                const distance = Math.abs(currentSlideIndex - index);
+                
+                // 移除所有active类
+                item.classList.remove('active');
+                
+                // 设置当前活跃项
+                if (index === currentSlideIndex) {
+                    item.classList.add('active');
+                }
+                
+                // 透明度和位移效果
+                const opacity = Math.max(0.2, 1 - distance * 0.4);
+                const translateY = -distance * 15;
+                
+                li.style.opacity = opacity;
+                li.style.transform = `translateY(${translateY}%)`;
+            });
+        }
+
+        // 更新进度条
+        function updateProgressBars(progress) {
+            const progressBars = {
+                'intro-progress': currentSlideIndex === 0 ? progress * 100 : (currentSlideIndex > 0 ? 100 : 0),
+                'tech-progress': currentSlideIndex === 1 ? progress * 100 : (currentSlideIndex > 1 ? 100 : 0),
+                'news-progress': currentSlideIndex === 2 ? progress * 100 : 0
+            };
+            
+            Object.keys(progressBars).forEach(id => {
+                const bar = document.getElementById(id);
+                if (bar) {
+                    bar.style.width = progressBars[id] + '%';
+                }
+            });
+        }
+
+        // 滚动动画循环
+        function startScrollAnimation() {
+            function animate() {
+                if (currentSlideIndex === 0) {
+                    scrollProgress += 0.005; // 滚动速度
+                    if (scrollProgress > 1) scrollProgress = 0;
+                    
+                    updateStarWarsScroll(scrollProgress);
+                    updateProgressBars(scrollProgress);
+                }
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 导航点击事件
+            document.querySelectorAll('.navigation a').forEach((link, index) => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchSlide(index);
+                });
+            });
+
+            // Scroll Down 按钮事件
+            document.querySelectorAll('.scroll-down').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const nextIndex = (currentSlideIndex + 1) % slides.length;
+                    switchSlide(nextIndex);
+                });
+            });
+
+            // 键盘导航
+            document.addEventListener('keydown', (e) => {
+                if (isTransitioning) return;
+                
+                switch(e.key) {
+                    case 'ArrowDown':
+                    case 'PageDown':
+                        e.preventDefault();
+                        const nextIndex = (currentSlideIndex + 1) % slides.length;
+                        switchSlide(nextIndex);
+                        break;
+                    case 'ArrowUp':
+                    case 'PageUp':
+                        e.preventDefault();
+                        const prevIndex = currentSlideIndex === 0 ? slides.length - 1 : currentSlideIndex - 1;
+                        switchSlide(prevIndex);
+                        break;
+                }
+            });
+
+            // 鼠标滚轮事件
+            let wheelTimeout;
+            document.addEventListener('wheel', (e) => {
+                if (isTransitioning) return;
+                
+                clearTimeout(wheelTimeout);
+                wheelTimeout = setTimeout(() => {
+                    if (e.deltaY > 0) {
+                        // 向下滚动
+                        const nextIndex = (currentSlideIndex + 1) % slides.length;
+                        switchSlide(nextIndex);
+                    } else {
+                        // 向上滚动
+                        const prevIndex = currentSlideIndex === 0 ? slides.length - 1 : currentSlideIndex - 1;
+                        switchSlide(prevIndex);
+                    }
+                }, 150);
+            }, { passive: true });
+        }
+    </script>
+</body>
+</html>

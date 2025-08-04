@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraFlow</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        /* Logo */
+        .logo {
+            position: fixed;
+            top: 30px;
+            left: 50px;
+            z-index: 1000;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 1;
+        }
+
+        /* 导航系统 */
+        .navigation {
+            position: fixed;
+            top: 50%;
+            right: 50px;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .navigation ul {
+            list-style: none;
+        }
+
+        .navigation li {
+            margin: 20px 0;
+            opacity: 0.6;
+            transform: translateY(0%);
+            transition: all 0.4s ease;
+        }
+
+        .navigation a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.6;
+            position: relative;
+            display: block;
+            text-align: right;
+            padding-right: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .navigation a.active {
+            opacity: 1;
+        }
+
+        .navigation a:hover {
+            opacity: 1;
+        }
+
+        .progress-border {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-line {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.3s ease-out;
+        }
+
+        /* 主要内容区域 */
+        .main-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+
+        /* 视频背景 */
+        .videobg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .videobg-container video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            opacity: 0.3;
+        }
+
+        .videobg-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 介绍段落 */
+        .intro-paragraph {
+            position: absolute;
+            top: 120px;
+            left: 50px;
+            max-width: 500px;
+            z-index: 20;
+            opacity: 1;
+        }
+
+        .intro-paragraph h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .intro-paragraph p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        /* 星球大战滚动文字容器 */
+        .starwars-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 15;
+            perspective: 1000px;
+        }
+
+        .starwars-wrapper {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 500%;
+            transform-style: preserve-3d;
+        }
+
+        .starwars-wrapper p {
+            position: absolute;
+            left: 50%;
+            font-size: 24px;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: normal;
+            letter-spacing: 1px;
+            width: 800px;
+            margin-left: -400px;
+            transform-origin: center center;
+        }
+
+        .starwars-wrapper p strong {
+            color: #ffd700;
+        }
+
+        /* Scroll Down 按钮 */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.8;
+            text-align: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .scroll-down:hover {
+            opacity: 1;
+        }
+
+        .scroll-down .icon {
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin: 0 auto 10px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .scroll-down .icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 6px;
+            height: 6px;
+            border-right: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+        }
+
+        .scroll-down span {
+            display: block;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+        }
+
+        /* 装饰边框 */
+        .border {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        .border[data-position="top"] {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        .border[data-position="right"] {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+        }
+
+        .border[data-position="bottom"] {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        .border[data-position="left"] {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 1px;
+        }
+
+        /* 进入应用按钮 */
+        .enter-app-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 50px;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .enter-app-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navigation {
+                right: 20px;
+            }
+            
+            .logo {
+                left: 20px;
+                font-size: 20px;
+            }
+            
+            .intro-paragraph {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+                top: 100px;
+            }
+
+            .intro-paragraph h1 {
+                font-size: 32px;
+            }
+            
+            .starwars-wrapper p {
+                font-size: 18px;
+                width: 90%;
+                margin-left: -45%;
+            }
+
+            .enter-app-btn {
+                right: 20px;
+                bottom: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <a href="#" class="logo">NeuraFlow</a>
+
+    <!-- 导航菜单 -->
+    <div class="navigation">
+        <ul>
+            <li>
+                <a href="#" class="active">
+                    Introduction
+                    <div class="progress-border">
+                        <div class="progress-line" id="intro-progress"></div>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 装饰边框 -->
+        <div class="border" data-position="top"></div>
+        <div class="border" data-position="right"></div>
+        <div class="border" data-position="left"></div>
+        <div class="border" data-position="bottom"></div>
+
+        <!-- 介绍段落 -->
+        <div class="intro-paragraph" id="intro-paragraph">
+            <h1>NeuraFlow</h1>
+            <p>NeuraFlow is an intelligent AI news aggregation platform, using cutting-edge technology to deliver personalized content experiences.</p>
+            <p>NeuraFlow facilitates <b>trusted</b> exchanges of curated AI insights with researchers, developers, and enthusiasts in a seamless, intelligent manner.</p>
+        </div>
+
+        <!-- 视频背景 -->
+        <div class="videobg-container">
+            <video autoplay muted loop>
+                <source src="frontend/public/videos/intro.mp4" type="video/mp4">
+            </video>
+            <div class="videobg-shadow"></div>
+        </div>
+
+        <!-- 星球大战滚动文字 -->
+        <div class="starwars-container">
+            <div class="starwars-wrapper" id="starwars-wrapper">
+                <p>When you want knowledge,</p>
+                <p>all the digital universe conspires</p>
+                <p>in helping you to discover it.</p>
+                <p><strong><i><small>NeuraFlow Vision</small></i></strong></p>
+                <p><br><br></p>
+                <p><br><br></p>
+                <p>AI is that conspiracy:</p>
+                <p>the conspiracy of intelligence.</p>
+                <p><br><br></p>
+                <p><br><br></p>
+                <p>Intelligence is the single</p>
+                <p>most important ingredient</p>
+                <p>missing from information overload.</p>
+                <p><br><br></p>
+                <p><br><br></p>
+                <p>McKinsey and OpenAI</p>
+                <p>forecast the AI economy</p>
+                <p>to be worth between</p>
+                <p><strong>4.4 and 15.7 trillion dollars</strong></p>
+                <p><strong>by 2030.</strong></p>
+                <p><br><br></p>
+                <p><br><br></p>
+                <p>The difference</p>
+                <p>between those numbers</p>
+                <p>is <strong>intelligent access</strong>.</p>
+                <p><br><br></p>
+                <p><br><br></p>
+                <p>NeuraFlow is a digital mechanism of <strong>intelligence</strong></p>
+            </div>
+        </div>
+
+        <!-- Scroll Down 按钮 -->
+        <a href="#" class="scroll-down" id="scroll-down-btn">
+            <i class="icon"></i>
+            <span>scroll down</span>
+        </a>
+
+        <!-- 进入应用按钮 -->
+        <a href="frontend/dist/index.html" class="enter-app-btn">Enter NeuraFlow</a>
+    </div>
+
+    <script>
+        // StarWars 滚动插件实现
+        class StarWarsScroll {
+            constructor(container, options) {
+                this.container = container;
+                this.options = Object.assign({
+                    debug: false,
+                    offsetSentenceDistance: 100,
+                    offsetScale: 0.1,
+                    offsetAlpha: 0.25,
+                    stagger: 0.5,
+                    duration: 1.2,
+                    lock: false
+                }, options);
+                
+                this.wrapper = container.querySelector('.starwars-wrapper');
+                this.sentences = this.wrapper.querySelectorAll('p');
+                this.isLocked = this.options.lock;
+                this.scrollProgress = 0;
+                this.timeline = new TimelineMax({ paused: true, ease: Linear.easeNone });
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupSentences();
+                this.createSequence();
+                this.bindEvents();
+                this.startAnimation();
+                this.log('StarWars scroll initialized');
+            }
+            
+            setupSentences() {
+                this.sentences.forEach((sentence, index) => {
+                    const y = index * this.options.offsetSentenceDistance;
+                    const scale = 1 - this.options.offsetScale * index;
+                    const alpha = 1 - this.options.offsetAlpha * index;
+                    
+                    TweenMax.set(sentence, {
+                        y: y + '%',
+                        scale: scale,
+                        alpha: alpha
+                    });
+                });
+            }
+            
+            createSequence() {
+                const maxSteps = Math.round(1 / this.options.offsetAlpha);
+                
+                this.sentences.forEach((sentence, index) => {
+                    let step = 0;
+                    let currentIndex = index;
+                    let staggerDelay = this.options.stagger * index;
+                    
+                    // 向上滚动阶段
+                    for (step = 0; step < currentIndex; step++) {
+                        this.timeline.to(sentence, this.options.duration, {
+                            y: this.options.offsetSentenceDistance * (currentIndex - step - 1) + '%',
+                            alpha: 1 - this.options.offsetAlpha * (currentIndex - step - 1),
+                            scale: 1 - this.options.offsetScale * (currentIndex - step - 1),
+                            ease: Linear.easeNone
+                        }, staggerDelay);
+                        staggerDelay += this.options.duration;
+                    }
+                    
+                    // 继续向上消失阶段
+                    if (index < this.sentences.length - 1) {
+                        for (step = 0; step < maxSteps; step++) {
+                            this.timeline.to(sentence, this.options.duration, {
+                                y: -this.options.offsetSentenceDistance * (step + 1) + '%',
+                                alpha: 1 - this.options.offsetAlpha * (step + 1),
+                                scale: 1 + this.options.offsetScale * (step + 1),
+                                ease: Linear.easeNone
+                            }, staggerDelay);
+                            staggerDelay += this.options.duration;
+                        }
+                    }
+                });
+            }
+            
+            bindEvents() {
+                // 鼠标滚轮控制
+                this.container.addEventListener('wheel', (e) => {
+                    if (this.isLocked) return;
+                    
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.02 : -0.02;
+                    this.scrollProgress = Math.max(0, Math.min(1, this.scrollProgress + delta));
+                    this.timeline.progress(this.scrollProgress);
+                    
+                    // 触发进度事件
+                    this.trigger('progress', this.scrollProgress);
+                });
+            }
+            
+            startAnimation() {
+                // 自动播放动画
+                const animate = () => {
+                    if (!this.isLocked) {
+                        this.scrollProgress += 0.002; // 更慢的自动滚动
+                        if (this.scrollProgress > 1) {
+                            this.scrollProgress = 0;
+                            this.trigger('complete');
+                        }
+                        
+                        this.timeline.progress(this.scrollProgress);
+                        this.trigger('progress', this.scrollProgress);
+                    }
+                    
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+            
+            lock() {
+                this.isLocked = true;
+            }
+            
+            unlock() {
+                this.isLocked = false;
+            }
+            
+            trigger(eventName, ...args) {
+                const event = new CustomEvent(eventName, { detail: args });
+                this.container.dispatchEvent(event);
+                this.log(`Event triggered: ${eventName}`);
+            }
+            
+            on(eventName, callback) {
+                this.container.addEventListener(eventName, callback);
+            }
+            
+            log(message) {
+                if (this.options.debug && window.console && window.console.log) {
+                    console.log(`StarWarsScroll: ${message}`);
+                }
+            }
+        }
+
+        // 主应用初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const starwarsContainer = document.querySelector('.starwars-container');
+            
+            // 初始化 StarWars 滚动
+            const starwarsScroll = new StarWarsScroll(starwarsContainer, {
+                debug: false,
+                offsetSentenceDistance: 100,
+                offsetScale: 0.1,
+                offsetAlpha: 0.25,
+                stagger: 0.5,
+                duration: 1.2
+            });
+            
+            // Scroll Down 按钮事件
+            const scrollDownBtn = document.getElementById('scroll-down-btn');
+            scrollDownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // 跳转到Vue应用
+                window.location.href = 'frontend/dist/index.html';
+            });
+            
+            // 更新进度条
+            function updateProgressBar(progress) {
+                const progressBar = document.getElementById('intro-progress');
+                if (progressBar) {
+                    TweenMax.to(progressBar, 0.3, {
+                        width: (progress * 100) + '%',
+                        ease: Power2.easeOut
+                    });
+                }
+            }
+            
+            // 监听 StarWars 滚动事件
+            starwarsScroll.on('progress', (e) => {
+                const progress = e.detail[0];
+                updateProgressBar(progress);
+                
+                // 控制介绍文字的显示/隐藏
+                const introParagraph = document.getElementById('intro-paragraph');
+                if (introParagraph) {
+                    const shouldShow = progress * 100 < 5;
+                    const currentOpacity = parseFloat(window.getComputedStyle(introParagraph).opacity);
+                    
+                    if (shouldShow && currentOpacity < 1) {
+                        TweenMax.to(introParagraph, 1.2, {
+                            opacity: 1,
+                            ease: Power2.easeOut
+                        });
+                    } else if (!shouldShow && currentOpacity > 0) {
+                        TweenMax.to(introParagraph, 1.2, {
+                            opacity: 0,
+                            ease: Power2.easeOut
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
