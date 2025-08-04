@@ -746,7 +746,7 @@ onUnmounted(() => {
 /* 星球大战滚动文字容器 - 大幅扩大显示区域 */
 .starwars-container {
   position: absolute;
-  top: 40%;
+  top: 30%; /* 向上移动容器 */
   left: 0;
   width: 100%;
   height: 200%;
@@ -772,14 +772,14 @@ onUnmounted(() => {
 .starwars-wrapper p {
   position: absolute;
   left: 50%;
-  font-size: 52px; /* 再次增大字体 */
+  font-size: 62px; /* 进一步增大字体 */
   text-align: center;
   white-space: nowrap;
   font-weight: 400;
   font-style: italic;
   letter-spacing: 2px;
-  width: 1200px; /* 增大宽度适应更大的字体 */
-  margin-left: -600px;
+  width: 1400px; /* 增大宽度适应更大的字体 */
+  margin-left: -700px;
   transform-origin: center center;
   color: #fff;
   opacity: 1;
@@ -801,7 +801,7 @@ onUnmounted(() => {
   color: #fff;
   font-weight: 900; /* 最大粗细 */
   font-style: italic;
-  font-size: 68px; /* 进一步增大Paulo Coelho字体 */
+  font-size: 78px; /* 进一步增大Paulo Coelho字体 */
   font-family: 'Helvetica Neue Black', 'Arial Black', 'Helvetica Neue', sans-serif; /* 更粗的字体 */
   background: linear-gradient(135deg, #ffffff, #f0f0f0, #ffffff);
   -webkit-background-clip: text;
@@ -812,8 +812,8 @@ onUnmounted(() => {
     0 0 50px rgba(255, 255, 255, 0.4);
   letter-spacing: 5px; /* 适当调整字母间距 */
   white-space: nowrap;
-  width: 1200px; /* 增大宽度适应更大的字体 */
-  margin-left: -600px;
+  width: 1400px; /* 增大宽度适应更大的字体 */
+  margin-left: -700px;
   text-align: center;
   position: absolute;
   left: 50%;

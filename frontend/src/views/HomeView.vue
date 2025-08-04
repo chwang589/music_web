@@ -105,15 +105,6 @@ const slideTo = (targetIndex: number, immediate = false) => {
   
   isTransitioning.value = true
   
-  // 立即更新进度条，不要等动画完成
-  if (targetIndex === 1) {
-    // 切换到news页面时，introduction进度条立即清零
-    introProgress.value = 0
-  } else if (targetIndex === 0) {
-    // 从news回到introduction时，立即设置为95%
-    introProgress.value = 95
-  }
-  
   const currentSlideEl = cinesliderContainer.value?.querySelector('.cineslider-slide-active') as HTMLElement
   const targetSlideEl = cinesliderContainer.value?.querySelectorAll('.cineslider-slide')[targetIndex] as HTMLElement
   
