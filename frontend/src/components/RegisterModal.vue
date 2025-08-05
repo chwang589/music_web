@@ -470,7 +470,7 @@ watch(() => props.isOpen, (newValue) => {
 
 .submit-btn {
   width: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #7896dc, #8aa6ee);
   color: white;
   border: none;
   padding: 12px;

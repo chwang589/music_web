@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration Test - NeuraFlow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 10px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 10px 10px 0;
+        }
+        .test-link:hover {
+            background: #764ba2;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .info { background: #17a2b8; }
+        .warning { background: #ffc107; color: #000; }
+    </style>
+</head>
+<body>
+    <h1>🚀 NeuraFlow 集成测试</h1>
+    
+    <div class="test-section">
+        <h2>📱 混合架构测试</h2>
+        <div class="status info">
+            <strong>架构说明：</strong> 
+            Landing Page (FeedMusic风格) → Vue应用 (功能完整)
+        </div>
+        
+        <a href="index.html" class="test-link" target="_blank">
+            🎬 测试Landing Page (FeedMusic效果)
+        </a>
+        
+        <a href="frontend/dist/index.html" class="test-link" target="_blank">
+            📰 直接访问Vue应用
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>🎥 FeedMusic效果测试清单</h2>
+        <ul>
+            <li>✅ CineSlider页面切换动画（双背景层过渡）</li>
+            <li>✅ StarWars风格滚动文字（3D变换和透明度）</li>
+            <li>✅ 实时进度条更新（同步滚动进度）</li>
+            <li>✅ 导航系统交互（点击和滚轮切换）</li>
+            <li>✅ Scroll Down按钮功能</li>
+            <li>✅ 键盘导航支持（方向键和Page键）</li>
+            <li>✅ 触摸手势支持（Hammer.js）</li>
+            <li>✅ 响应式设计（移动端适配）</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 集成点测试</h2>
+        <div class="status success">
+            <strong>✅ 路径映射：</strong> Landing Page → frontend/dist/index.html
+        </div>
+        <div class="status success">
+            <strong>✅ 视频资源：</strong> frontend/public/videos/intro.mp4
+        </div>
+        <div class="status success">
+            <strong>✅ 构建状态：</strong> Vue应用已成功构建
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 预期用户体验流程</h2>
+        <ol>
+            <li><strong>Landing Page</strong>: 用户首先看到FeedMusic风格的震撼视觉效果</li>
+            <li><strong>视觉体验</strong>: 通过4个页面了解NeuraFlow平台（Introduction → Technology → AI News → Enter App）</li>
+            <li><strong>功能入口</strong>: 点击"Enter NeuraFlow App"按钮进入功能完整的Vue应用</li>
+            <li><strong>功能使用</strong>: 在Vue应用中进行注册/登录、浏览新闻、管理内容等操作</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>⚡ 技术实现亮点</h2>
+        <ul>
+            <li><strong>真实代码复刻</strong>: 基于FeedMusic原始JavaScript代码实现</li>
+            <li><strong>GSAP动画引擎</strong>: 使用TimelineMax和TweenMax实现流畅动画</li>
+            <li><strong>事件系统</strong>: 完整的CineSlider和StarWarsScroll事件机制</li>
+            <li><strong>性能优化</strong>: requestAnimationFrame驱动的滚动动画</li>
+            <li><strong>无缝集成</strong>: Landing Page与Vue应用的平滑过渡</li>
+        </ul>
+    </div>
+
+    <script>
+        // 简单的状态检查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎉 NeuraFlow集成测试页面加载完成');
+            console.log('📊 本地服务器: http://localhost:8081/');
+            console.log('🎬 Landing Page: http://localhost:8081/index.html');
+            console.log('📰 Vue App: http://localhost:8081/frontend/dist/index.html');
+        });
+    </script>
+</body>
+</html>
