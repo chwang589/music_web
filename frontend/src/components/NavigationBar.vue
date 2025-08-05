@@ -31,25 +31,19 @@
         <div v-if="!authStore.isAuthenticated" class="auth-buttons">
           <button @click="$emit('openLogin')" class="auth-btn login-btn">
             LOGIN
-            <div class="progress-border">
-              <div class="progress-line" style="width: 0%"></div>
-            </div>
           </button>
           <button @click="$emit('openRegister')" class="auth-btn register-btn">
             REGISTER
-            <div class="progress-border">
-              <div class="progress-line" style="width: 0%"></div>
-            </div>
           </button>
         </div>
         
         <div v-else class="user-menu">
-          <span class="username">{{ authStore.username }}</span>
+          <span class="username">{{ authStore.username.toUpperCase() }}</span>
           <button @click="goToUserCenter" class="auth-btn user-center-btn">
-            User Center
+            USER CENTER
           </button>
           <button @click="logout" class="auth-btn logout-btn">
-            Logout
+            LOGOUT
           </button>
         </div>
       </div>
@@ -458,14 +452,14 @@ onMounted(() => {
   }
   
   .scrolled .nav-sections {
-    right: 180px !important;
+    display: none !important;
   }
   
   .nav-auth {
     position: fixed;
-    bottom: 10px;
-    left: 20px;
-    right: 20px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
     background: transparent !important;
     backdrop-filter: none !important;
     flex-direction: row;
@@ -486,9 +480,11 @@ onMounted(() => {
     bottom: auto !important;
     left: auto !important;
     right: 20px !important;
+    transform: none !important;
     width: auto !important;
     justify-content: flex-end !important;
-    gap: 20px !important;
+    gap: 10px !important;
+    flex-direction: row !important;
   }
   
   /* 移动端始终显示 */
@@ -502,9 +498,9 @@ onMounted(() => {
   
   .scrolled .nav-auth {
     position: fixed !important;
-    bottom: 10px !important;
-    left: 20px !important;
-    right: 20px !important;
+    bottom: 5px !important;
+    left: 15px !important;
+    right: 15px !important;
   }
   
   .nav-item {
@@ -525,6 +521,11 @@ onMounted(() => {
     transition: all 0.3s ease;
     white-space: nowrap;
     font-weight: 600;
+  }
+  
+  .scrolled .nav-button {
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
   }
   
   .nav-button:hover {
@@ -548,22 +549,24 @@ onMounted(() => {
   }
   
   .auth-btn {
-    padding: 12px 20px;
+    padding: 8px 12px;
     text-align: center;
     color: #ffffff !important;
     background: transparent !important;
     backdrop-filter: none !important;
     border: none !important;
     border-radius: 8px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     font-weight: 600;
     transition: all 0.3s ease;
     white-space: nowrap;
     flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
+  }
+  
+  
+  .scrolled .auth-btn {
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
   }
   
   .auth-btn:hover {
@@ -584,44 +587,68 @@ onMounted(() => {
   .user-menu {
     flex-direction: row;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+  }
+  
+  .scrolled .user-menu {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  
+  .scrolled .user-menu .username {
+    display: block !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .scrolled .user-menu .auth-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
   }
   
   .username {
     text-align: center;
-    padding: 12px 16px;
-    color: #ffffff !important;
-    font-weight: 500;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    border: none !important;
-    border-radius: 8px;
-    font-size: 1rem;
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-  
-  .scrolled .username {
-    color: #2c3e50 !important;
-  }
-  
-  /* 移动端用户信息统一样式 */
-  .user-menu .username {
-    text-align: center;
-    padding: 12px 20px;
+    padding: 8px 12px;
     color: #ffffff !important;
     font-weight: 600;
     background: transparent !important;
     backdrop-filter: none !important;
     border: none !important;
     border-radius: 8px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     white-space: nowrap;
     flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
+    transition: all 0.3s ease;
+  }
+  
+  .username:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-2px);
+  }
+  
+  .scrolled .username {
+    color: #2c3e50 !important;
+  }
+  
+  /* 移动端用户信息统一样式 - 不带进度条 */
+  .user-menu .username {
+    text-align: center;
+    padding: 6px 10px;
+    color: #ffffff !important;
+    font-weight: 600;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
     transition: all 0.3s ease;
   }
   
@@ -638,21 +665,16 @@ onMounted(() => {
     background: rgba(44, 62, 80, 0.1) !important;
   }
   
-  .user-menu .username::after {
-    content: '';
-    width: 60px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    display: block;
-  }
-  
-  .scrolled .user-menu .username::after {
-    background: rgba(102, 126, 234, 0.2);
-  }
-  
-  .user-menu .auth-btn {
+  .scrolled .user-menu .auth-btn {
     text-transform: uppercase;
+    padding: 6px 10px !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .scrolled .user-menu .username {
+    padding: 6px 10px !important;
+    font-size: 0.8rem;
   }
 }
 

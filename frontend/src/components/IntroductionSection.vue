@@ -842,8 +842,8 @@ onUnmounted(() => {
 .starwars-container {
   position: absolute;
   top: 30%; /* 向上移动容器 */
-  left: 5%;
-  width: 90%;
+  left: 2%;
+  width: 96%;
   height: 200%;
   overflow: hidden;
   z-index: 15;
@@ -1045,7 +1045,7 @@ onUnmounted(() => {
   }
   
   .starwars-wrapper p {
-    font-size: 28px; /* 移动端更小字体 */
+    font-size: 20px; /* 移动端更小字体 */
     width: 90%; /* 限制宽度让文字换行 */
     left: 50%; /* 居中定位 */
     margin-left: -45%; /* 居中偏移 */
@@ -1053,8 +1053,8 @@ onUnmounted(() => {
     text-align: center; /* 确保文本居中 */
     padding: 0 15px; /* 内边距 */
     box-sizing: border-box;
-    line-height: 1.6; /* 增加行高 */
-    letter-spacing: 2px; /* 增加字母间距 */
+    line-height: 1.7; /* 增加行高 */
+    letter-spacing: 3px; /* 增加字母间距 */
     transform-origin: center center;
     word-wrap: break-word;
     hyphens: auto;

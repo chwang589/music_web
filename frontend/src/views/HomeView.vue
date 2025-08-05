@@ -205,9 +205,13 @@ const handleWheel = (event: WheelEvent) => {
   // If we're in news slide (currentSlide === 1)
   if (currentSlide.value === 1) {
     // Allow scrolling back to introduction when scrolling up and at top of news page
-    if (event.deltaY < -50) {
-      const newsContainer = document.querySelector('.news-section .container') as HTMLElement
-      if (newsContainer && newsContainer.scrollTop <= 0) {
+    if (event.deltaY < -30) {
+      // Try multiple selectors to find the news container
+      const newsContainer = document.querySelector('.news-section .container') as HTMLElement ||
+                          document.querySelector('#news .container') as HTMLElement ||
+                          document.querySelector('.container') as HTMLElement
+      
+      if (newsContainer && newsContainer.scrollTop <= 5) {
         event.preventDefault()
         prevSlide()
         return
@@ -278,6 +282,19 @@ const initTouchNavigation = () => {
   hammer.on('swipedown', (e) => {
     // 如果在Introduction页面，不处理快速滑动，让IntroductionSection处理
     if (currentSlide.value === 0) {
+      return
+    }
+    
+    // 如果在News页面，检查是否在顶部才允许滑动回Introduction
+    if (currentSlide.value === 1) {
+      const newsContainer = document.querySelector('.news-section .container') as HTMLElement ||
+                          document.querySelector('#news .container') as HTMLElement ||
+                          document.querySelector('.container') as HTMLElement
+      
+      if (newsContainer && newsContainer.scrollTop <= 5 && !isTransitioning.value) {
+        console.log('Touch swipe down detected from top of news, navigating to introduction')
+        prevSlide()
+      }
       return
     }
     
